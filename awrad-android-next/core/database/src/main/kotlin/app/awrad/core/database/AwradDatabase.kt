@@ -11,6 +11,7 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [
         GoalEntity::class,
+        GoalOrderEntity::class,
         CustomDhikrEntity::class,
         UserTagEntity::class,
         DhikrPersonalEntity::class,
@@ -25,8 +26,6 @@ import androidx.room.RoomDatabase
     exportSchema = true,
 )
 public abstract class AwradDatabase : RoomDatabase() {
-    public abstract fun goalDao(): GoalDao
-
     public abstract fun syncDao(): SyncDao
 
     public companion object {

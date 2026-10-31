@@ -65,6 +65,8 @@ internal class DataSyncViewModel @Inject constructor(
                         EntityType.USER_TAG -> ConflictName.Tag(allTags.firstOrNull { it.id == key.id }?.name)
                         // A practice policy merges instead of opening a conflict; this is only for completeness.
                         EntityType.PRACTICE_POLICY -> ConflictName.PracticeSettings
+                        // A goal takes the server's copy and the goal order merges: also only for completeness.
+                        EntityType.GOAL, EntityType.GOAL_ORDER -> ConflictName.Goals
                     }
                 }
                 Loaded(status, list, conflicts.map { NamedConflict(it, names(it.key)) })
@@ -135,6 +137,8 @@ internal sealed interface ConflictName {
     data class Tag(val name: String?) : ConflictName
 
     data object PracticeSettings : ConflictName
+
+    data object Goals : ConflictName
 }
 
 internal data class NamedConflict(val conflict: OpenConflict, val name: ConflictName)

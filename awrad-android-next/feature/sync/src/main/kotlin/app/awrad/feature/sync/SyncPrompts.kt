@@ -244,12 +244,18 @@ internal fun refusedReason(code: RejectionCode): Int = when (code) {
     RejectionCode.AUDIO_NOT_FOUND -> R.string.sync_reason_audio_not_found
     RejectionCode.AUDIO_MISMATCH -> R.string.sync_reason_audio_mismatch
     RejectionCode.ENTITY_ID_INVALID -> R.string.sync_reason_entity_id_invalid
+    RejectionCode.GOAL_LIMIT_REACHED -> R.string.sync_reason_goal_limit
+    RejectionCode.GOAL_EDIT_NOT_APPLIED -> R.string.sync_reason_goal_edit_not_applied
     RejectionCode.HIJRI_CORRECTIONS_REPLACED -> R.string.sync_reason_hijri_corrections_replaced
 }
 
-/** The notice's title: "Change refused", or for a practice-policy merge that dropped corrections, its own. */
+/**
+ * The notice's title: "Change refused", or its own for a practice-policy merge that dropped corrections and for a goal
+ * edit another device's beat.
+ */
 @StringRes
 internal fun noticeTitle(code: RejectionCode): Int = when (code) {
     RejectionCode.HIJRI_CORRECTIONS_REPLACED -> R.string.sync_hijri_replaced_title
+    RejectionCode.GOAL_EDIT_NOT_APPLIED -> R.string.sync_goal_edit_not_applied_title
     else -> R.string.sync_rejected_title
 }

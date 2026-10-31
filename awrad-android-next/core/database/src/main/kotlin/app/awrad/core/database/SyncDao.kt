@@ -35,10 +35,10 @@ public interface SyncDao {
     @Query("SELECT COUNT(*) FROM custom_dhikrs")
     public fun customDhikrCount(): Int
 
-    /** Whether the profile holds any custom dhikr, tag or personal record. */
+    /** Whether the profile holds any custom dhikr, tag, personal record or goal (not the goal order: it's no data). */
     @Query(
         "SELECT EXISTS(SELECT 1 FROM custom_dhikrs) OR EXISTS(SELECT 1 FROM user_tags) " +
-            "OR EXISTS(SELECT 1 FROM dhikr_personal)",
+            "OR EXISTS(SELECT 1 FROM dhikr_personal) OR EXISTS(SELECT 1 FROM goals)",
     )
     public fun hasData(): Boolean
 
@@ -75,6 +75,34 @@ public interface SyncDao {
 
     @Query("SELECT * FROM dhikr_personal")
     public fun observePersonals(): Flow<List<DhikrPersonalEntity>>
+
+    // Goals
+
+    @Query("SELECT * FROM goals WHERE id = :id")
+    public fun goal(id: String): GoalEntity?
+
+    @Query("SELECT * FROM goals")
+    public fun goals(): List<GoalEntity>
+
+    @Upsert
+    public fun upsertGoal(entity: GoalEntity)
+
+    @Query("DELETE FROM goals WHERE id = :id")
+    public fun deleteGoal(id: String)
+
+    @Query("SELECT * FROM goals")
+    public fun observeGoals(): Flow<List<GoalEntity>>
+
+    // Goal order (one row; none until the user reorders or the account's arrives)
+
+    @Query("SELECT * FROM goal_order WHERE id = 0")
+    public fun goalOrder(): GoalOrderEntity?
+
+    @Upsert
+    public fun upsertGoalOrder(entity: GoalOrderEntity)
+
+    @Query("SELECT * FROM goal_order WHERE id = 0")
+    public fun observeGoalOrder(): Flow<GoalOrderEntity?>
 
     // Outbox
 

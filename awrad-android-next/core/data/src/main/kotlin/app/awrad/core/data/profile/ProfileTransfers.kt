@@ -27,7 +27,7 @@ internal class ProfileTransfers(
     private val clock: Clock,
     private val newId: () -> AwradId,
 ) {
-    /** Whether [profileId] holds any custom dhikr, tag or personal record. */
+    /** Whether [profileId] holds any custom dhikr, tag, personal record or goal. */
     suspend fun hasData(profileId: AwradId): Boolean =
         databases.writeTo(profileId) { it.database.syncDao().hasData() }
 
@@ -37,8 +37,9 @@ internal class ProfileTransfers(
 
     /**
      * "Add to my account": queues every entity of [profileId] as a put, tags first, then custom dhikrs, then the
-     * personal records that name them, so the server meets each before it's referenced; and every recording kept
-     * only on this phone for upload, which queues its dhikr's put again once it's confirmed.
+     * personal records and goals that name them, so the server meets each before it's referenced; and every
+     * recording kept only on this phone for upload, which queues its dhikr's put again once it's confirmed. The goal
+     * order isn't one of the profile's entities yet (contracts/sync/v1/README.md, "Local profiles").
      */
     suspend fun queueAll(profileId: AwradId) {
         databases.writeTo(profileId) { profile ->
@@ -80,13 +81,14 @@ internal class ProfileTransfers(
     /**
      * Adds the anonymous profile [from]'s data to the account's existing profile [into] and queues it there
      * ([ProfileMerge]): same-name tags fold onto [into]'s, a dhikr tagged in both gets the union of their tags,
-     * and the new tags, every custom dhikr, then the new or changed personal records are queued as puts, in that
-     * order. Recordings are copied into [into]'s files and queued for upload.
+     * and the new tags, every custom dhikr, then the new or changed personal records, then every goal (keeping its
+     * ID) are queued as puts, in that order. Recordings are copied into [into]'s files and queued for upload.
      */
     suspend fun mergeAnonymous(from: AwradId, into: AwradId) {
         val source = databases.writeTo(from) { profile ->
             val dao = profile.database.syncDao()
-            AnonymousData(RoomSyncStore(dao, now = clock::millis).profileData(), dao.customDhikrs())
+            val store = RoomSyncStore(dao, now = clock::millis)
+            AnonymousData(store.profileData(), dao.customDhikrs(), store.entities(EntityType.GOAL))
         }
         databases.writeTo(into) { profile ->
             val dao = profile.database.syncDao()
@@ -112,6 +114,7 @@ internal class ProfileTransfers(
             merged.queued.filter { it.type == EntityType.DHIKR_PERSONAL }.forEach { key ->
                 put(key, PersonalDocument.of(records.getValue(key.id).tagIds))
             }
+            source.goals.forEach { goal -> put(goal.key, goal.document) }
         }
     }
 
@@ -130,9 +133,13 @@ internal class ProfileTransfers(
         },
     )
 
-    private class AnonymousData(val data: ProfileData, val dhikrs: List<CustomDhikrEntity>)
+    private class AnonymousData(
+        val data: ProfileData,
+        val dhikrs: List<CustomDhikrEntity>,
+        val goals: List<LocalEntity>,
+    )
 
     private companion object {
-        val ORDER = listOf(EntityType.USER_TAG, EntityType.CUSTOM_DHIKR, EntityType.DHIKR_PERSONAL)
+        val ORDER = listOf(EntityType.USER_TAG, EntityType.CUSTOM_DHIKR, EntityType.DHIKR_PERSONAL, EntityType.GOAL)
     }
 }

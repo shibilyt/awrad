@@ -112,31 +112,16 @@ private fun GoalDefinition.totals(
     counts: CountIndex,
     isDue: Boolean,
 ): RequirementStanding {
-    val isTracker = requirement == Requirement.Tracker
-    val sessionStandings = sessions.map { session ->
-        val sessionProgress = counts.sessionTotal(window, upTo, session.id)
-        SessionStanding(
-            id = session.id,
-            progress = sessionProgress,
-            target = session.countPolicy.target,
-            isMet = session.countPolicy.meetsTarget(sessionProgress),
-        )
-    }
-    val progress = if (sessions.isEmpty()) counts.total(window, upTo) else sessionStandings.sumOf { it.progress }
-    val isMet = when {
-        sessions.isNotEmpty() -> sessionStandings.all { it.isMet }
-        isTracker -> progress > 0
-        else -> countPolicy.meetsTarget(progress)
-    }
+    val progress = progressOver(window.days().filter { !it.isAfter(upTo) }.toList(), counts)
     return RequirementStanding(
         status = when {
             !isDue -> StandingStatus.NOT_DUE
-            isMet -> StandingStatus.MET
+            isMetBy(progress) -> StandingStatus.MET
             else -> StandingStatus.NOT_MET
         },
         window = window,
-        progress = progress,
-        target = if (isTracker || sessions.isNotEmpty()) null else countPolicy.target,
-        sessions = sessionStandings,
+        progress = progress.total,
+        target = if (requirement == Requirement.Tracker || sessions.isNotEmpty()) null else countPolicy.target,
+        sessions = progress.sessions,
     )
 }
