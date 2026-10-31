@@ -17,7 +17,6 @@ import app.awrad.core.domain.account.AccountRepository
 import app.awrad.core.domain.account.AccountSettingsRepository
 import app.awrad.core.domain.audio.AudioPlayerFactory
 import app.awrad.core.domain.dhikr.DhikrCatalogSource
-import app.awrad.core.domain.goal.GoalRepository
 import app.awrad.core.domain.onboarding.OnboardingStatusStore
 import app.awrad.core.domain.places.CitySource
 import app.awrad.core.domain.places.CurrentLocation
@@ -39,9 +38,6 @@ private val Context.awradPreferences: DataStore<Preferences> by preferencesDataS
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface DataModule {
-
-    @Binds
-    fun goalRepository(adapter: RoomGoalRepository): GoalRepository
 
     @Binds
     fun accountRepository(adapter: NetworkAccountRepository): AccountRepository

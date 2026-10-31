@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "d30a84fe312a989176707ffadfa46a71",
+    "identityHash": "ac16ca414473ea1f78e18170c3db1e68",
     "entities": [
       {
         "tableName": "goals",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `dhikr_catalog_key` TEXT NOT NULL, `target` INTEGER, `start_epoch_day` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `known_version` INTEGER NOT NULL, `document` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -15,22 +15,60 @@
             "notNull": true
           },
           {
-            "fieldPath": "dhikrCatalogKey",
-            "columnName": "dhikr_catalog_key",
+            "fieldPath": "knownVersion",
+            "columnName": "known_version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "document",
+            "columnName": "document",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "goal_order",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entity_id` TEXT, `known_version` INTEGER NOT NULL, `document` TEXT NOT NULL, `base_document` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entity_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "knownVersion",
+            "columnName": "known_version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "document",
+            "columnName": "document",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "target",
-            "columnName": "target",
-            "affinity": "INTEGER",
+            "fieldPath": "baseDocument",
+            "columnName": "base_document",
+            "affinity": "TEXT",
             "notNull": false
-          },
-          {
-            "fieldPath": "startEpochDay",
-            "columnName": "start_epoch_day",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -527,7 +565,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd30a84fe312a989176707ffadfa46a71')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ac16ca414473ea1f78e18170c3db1e68')"
     ]
   }
 }

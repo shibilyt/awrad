@@ -1,55 +1,123 @@
 import Foundation
 
-/// A single measurable objective attached to one dhikr or tracked amal (CONTEXT.md, Goal language).
+/// What a goal rule evaluates on one day (`$defs/goal` of `contracts/goal-model/v1`): one
+/// version's settings plus the goal's pauses and excused days. A goal's whole life is a
+/// `GoalTimeline` (`GoalDocument` adds the dhikr, name and counts); `timeline.goal(on:)` resolves it
+/// into the `Goal` in force on a day, and a lone `Goal` stands for a timeline of one version.
 ///
-/// The rule-bearing fields mirror `contracts/goal-model/v1/goal-model.schema.json`. The rules
-/// themselves live in one file each: `Goal+Validity`, `Goal+IsDue`, `Goal+RequirementStanding`,
-/// `Goal+DaysPerPeriod`, `Goal+Completion`, `Goal+Streak`, plus `EffectivePracticeDay`.
+/// The rules live in one file each: `Goal+Validity`, `Goal+IsDue`, `Goal+RequirementStanding`,
+/// `Goal+DaysPerPeriod`, `Goal+Completion`, then the timeline rules (`GoalTimeline+…`), `GoalList`
+/// and `CountAttribution`, plus `EffectivePracticeDay`.
 ///
-/// Every `Goal` is valid (`Goal+Validity`): the initializer throws `GoalValidationError` when a
-/// target or the streak threshold's value is missing, and the properties are read-only, so no rule
-/// ever sees an invalid goal. Structural limits the schema enforces (an empty weekday set,
-/// `every < 1`) are the boundary's job (slice 3); the rules stay total on them: never due or met.
+/// Every `Goal` is valid: its settings are (`GoalSettings` throws `GoalValidationError`), and the
+/// properties are read-only, so no rule ever sees an invalid goal. Structural limits the schema
+/// enforces (an empty weekday set, `every < 1`) are the boundary's job; the rules stay total on
+/// them: never due or met.
 public struct Goal: Hashable, Sendable {
-    public let id: AwradID
-    public let dhikrCatalogKey: String
+    public let settings: GoalSettings
+    /// Days the user suspended the goal. Not versioned.
+    public let paused: [PausedRange]
+    /// Past missed days the user excused (`GoalTimeline+Excuse`), skipped like paused days. Not
+    /// versioned.
+    public let excused: [CalendarDay]
+
+    public init(settings: GoalSettings, paused: [PausedRange] = [], excused: [CalendarDay] = []) {
+        self.settings = settings
+        self.paused = paused
+        self.excused = excused
+    }
+
+    /// Builds the settings and the goal, or throws every reason the settings are invalid.
+    public init(
+        schedule: Schedule,
+        activePeriod: ActivePeriod,
+        paused: [PausedRange] = [],
+        excused: [CalendarDay] = [],
+        countPolicy: CountPolicy,
+        sessions: [GoalSession] = [],
+        requirement: Requirement,
+        completion: CompletionPolicy = .never,
+        makeUp: MakeUp = .off
+    ) throws(GoalValidationError) {
+        let settings = try GoalSettings(
+            schedule: schedule, activePeriod: activePeriod, countPolicy: countPolicy, sessions: sessions,
+            requirement: requirement, completion: completion, makeUp: makeUp)
+        self.init(settings: settings, paused: paused, excused: excused)
+    }
+
+    public var schedule: Schedule { settings.schedule }
+    public var activePeriod: ActivePeriod { settings.activePeriod }
+    /// The goal's own numbers. With sessions, each session's target applies instead.
+    public var countPolicy: CountPolicy { settings.countPolicy }
+    public var sessions: [GoalSession] { settings.sessions }
+    public var requirement: Requirement { settings.requirement }
+    public var completion: CompletionPolicy { settings.completion }
+    public var makeUp: MakeUp { settings.makeUp }
+
+    func isPaused(on day: CalendarDay) -> Bool {
+        paused.contains { $0.contains(day) }
+    }
+
+    func isExcused(on day: CalendarDay) -> Bool {
+        excused.contains(day)
+    }
+}
+
+/// The settings a dated version holds (`$defs/goal_settings`): everything a rule reads except
+/// pauses and excused days. The initializer throws every reason they'd be invalid, so only valid
+/// settings exist.
+public struct GoalSettings: Hashable, Sendable {
     public let schedule: Schedule
     public let activePeriod: ActivePeriod
-    public let paused: [PausedRange]
-    /// The goal's own numbers. With sessions, each session's count policy applies instead.
     public let countPolicy: CountPolicy
     public let sessions: [GoalSession]
     public let requirement: Requirement
     public let completion: CompletionPolicy
+    public let makeUp: MakeUp
 
-    /// Builds a goal, or throws every reason it would be invalid (`GoalValidationError.codes`).
     public init(
-        id: AwradID,
-        dhikrCatalogKey: String,
         schedule: Schedule,
         activePeriod: ActivePeriod,
-        paused: [PausedRange] = [],
         countPolicy: CountPolicy,
         sessions: [GoalSession] = [],
         requirement: Requirement,
-        completion: CompletionPolicy = .never
+        completion: CompletionPolicy = .never,
+        makeUp: MakeUp = .off
     ) throws(GoalValidationError) {
-        try Self.validate(countPolicy: countPolicy, sessions: sessions, requirement: requirement)
-        self.id = id
-        self.dhikrCatalogKey = dhikrCatalogKey
+        let codes = Self.validationCodes(
+            activePeriod: activePeriod, countPolicy: countPolicy, sessions: sessions,
+            requirement: requirement, makeUp: makeUp)
+        guard codes.isEmpty else { throw GoalValidationError(codes) }
         self.schedule = schedule
         self.activePeriod = activePeriod
-        self.paused = paused
         self.countPolicy = countPolicy
         self.sessions = sessions
         self.requirement = requirement
         self.completion = completion
+        self.makeUp = makeUp
+    }
+
+    /// The same settings with the active period ending on `day` (an ended goal's last day). Still
+    /// valid: an end date never breaks a rule, and it replaces any number of days.
+    func ending(on day: CalendarDay) -> GoalSettings {
+        GoalSettings(copying: self, activePeriod: ActivePeriod(start: activePeriod.start, end: day))
+    }
+
+    private init(copying other: GoalSettings, activePeriod: ActivePeriod) {
+        schedule = other.schedule
+        self.activePeriod = activePeriod
+        countPolicy = other.countPolicy
+        sessions = other.sessions
+        requirement = other.requirement
+        completion = other.completion
+        makeUp = other.makeUp
     }
 }
 
 /// Which days a goal is due. Seasons (Ramadan, white days…) aren't a kind: they're presets that
 /// fill in `hijriMonthDays` or `yearly` (`contracts/goal-presets/v1`).
 public enum Schedule: Hashable, Sendable {
+    /// Also a total with no rhythm ("70,000 in total"): due every day of its active period.
     case everyDay
     case weekdays(Set<Weekday>)
     /// Every `every` days counted from `anchor`, or from the start date when `anchor` is `nil`.
@@ -57,7 +125,7 @@ public enum Schedule: Hashable, Sendable {
     /// Days of the month (1...31). A day past the month's end falls on its last day.
     case monthDays(Set<Int>)
     case specificDates(Set<CalendarDay>)
-    /// No repeating pattern: due every day of the active period until completed.
+    /// Kept from slice 1 and evaluated like `everyDay`; the sentence never writes it.
     case oneTime
     /// Days of the Hijri month (1...30). Day 30 falls on day 29 in a 29-day month.
     case hijriMonthDays(Set<Int>)
@@ -96,6 +164,9 @@ public struct YearlyRange: Hashable, Sendable {
         self.start = start
         self.end = end
     }
+
+    /// Whether the range runs over the year end.
+    var wrapsYearEnd: Bool { end < start }
 }
 
 /// The span a goal can be due in. Both ends are inclusive.
@@ -124,6 +195,9 @@ public struct ActivePeriod: Hashable, Sendable {
         day >= start && lastDay.map { day <= $0 } ?? true
     }
 
+    /// Whether the period has a last day (an end date or a number of days).
+    var hasEnd: Bool { end != nil || durationDays != nil }
+
     /// `window` clipped to the active period; `nil` when they don't overlap.
     func clip(_ window: ClosedRange<CalendarDay>) -> ClosedRange<CalendarDay>? {
         let from = max(window.lowerBound, start)
@@ -145,108 +219,4 @@ public struct PausedRange: Hashable, Sendable {
     public func contains(_ day: CalendarDay) -> Bool {
         day >= from && to.map { day <= $0 } ?? true
     }
-}
-
-/// The numbers a goal or session works against. Counts are whole numbers.
-public struct CountPolicy: Hashable, Sendable {
-    public var minimum: Int64?
-    public var target: Int64?
-    /// The cap.
-    public var maximum: Int64?
-    /// Which number a day must reach to count toward the streak.
-    public var streakThreshold: CountThreshold
-
-    public init(minimum: Int64? = nil, target: Int64?, maximum: Int64? = nil, streakThreshold: CountThreshold) {
-        self.minimum = minimum
-        self.target = target
-        self.maximum = maximum
-        self.streakThreshold = streakThreshold
-    }
-
-    /// Whether `count` reaches `threshold`. A threshold whose number isn't set can never be met.
-    public func isMet(by count: Int64, at threshold: CountThreshold) -> Bool {
-        switch threshold {
-        case .anyCount: count > 0
-        case .minimum: minimum.map { count >= $0 } ?? false
-        case .target: target.map { count >= $0 } ?? false
-        case .maximum: maximum.map { count >= $0 } ?? false
-        }
-    }
-}
-
-/// One of a count policy's levels.
-public enum CountThreshold: String, CaseIterable, Hashable, Sendable {
-    case anyCount, minimum, target, maximum
-}
-
-/// A time-of-day opportunity (after Fajr, at 18:00, …) with its own count policy.
-public struct GoalSession: Hashable, Sendable, Identifiable {
-    /// Stable within the goal, such as `fajr`.
-    public var id: String
-    public var countPolicy: CountPolicy
-
-    public init(id: String, countPolicy: CountPolicy) {
-        self.id = id
-        self.countPolicy = countPolicy
-    }
-}
-
-/// The rule that decides whether a goal is met within a window. Totals use the count policy's
-/// target as the total; days per period uses it as the daily target.
-public enum Requirement: Hashable, Sendable {
-    case perDueDate
-    case cumulativeTotal
-    case periodTotal(Period)
-    /// `days` qualifying days per period (a qualifying day is a due day meeting the daily target).
-    case daysPerPeriod(Period, days: Int)
-    /// No target: any count is progress.
-    case tracker
-}
-
-/// A week (from the account's week start), a Gregorian month or a Hijri month (with the account's
-/// corrections).
-public enum Period: String, CaseIterable, Hashable, Sendable {
-    case week, month, hijriMonth
-
-    /// The whole period containing `day`, before clipping to an active period; `nil` for a Hijri
-    /// month outside the table.
-    public func window(
-        containing day: CalendarDay,
-        weekStart: WeekStart,
-        hijriCorrections: HijriCorrections = .none
-    ) -> ClosedRange<CalendarDay>? {
-        switch self {
-        case .week:
-            let first = day.adding(days: -day.weekday.daysSince(weekStart.weekday))
-            return first...first.adding(days: 6)
-        case .month:
-            return day.firstDayOfMonth...day.lastDayOfMonth
-        case .hijriMonth:
-            return hijriCorrections.calendar.month(containing: day)?.days
-        }
-    }
-}
-
-/// When a goal counts as completed. Completion is derived by `Goal.isCompleted`, never stored.
-public enum CompletionPolicy: String, CaseIterable, Hashable, Sendable {
-    case never, whenTargetReached, whenDurationEnded
-}
-
-/// A day's count for the goal (`session == nil`) or for one session, on an effective practice day.
-public struct CountEntry: Hashable, Sendable {
-    public var day: CalendarDay
-    public var session: String?
-    public var count: Int64
-
-    public init(day: CalendarDay, session: String? = nil, count: Int64) {
-        self.day = day
-        self.session = session
-        self.count = count
-    }
-}
-
-/// Port: goal persistence. Adapters own storage and sync bookkeeping.
-public protocol GoalRepository: Sendable {
-    func add(_ goal: Goal) async throws
-    func count() async throws -> Int
 }

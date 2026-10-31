@@ -2,7 +2,7 @@
 
 The Awrad iOS app, rebuilt to replace `awrad-ios/` (root ADR-2026-10-14).
 - **Stack:** SwiftUI, SwiftData and Observation on iOS 18, built with Xcode 26.2 / Swift 6.2.
-- **Status:** scaffold plus the slice 1 goal rules, the slice 1b Hijri calendar, the slice 2a and 2b accounts, the slice 3a dhikr catalog and Library, the slice 3b custom dhikrs, tags, local profiles and change queue, the slice 3c private audio uploads, and the slice 3d practice settings. A placeholder onboarding screen and home screen prove the wiring; features arrive in slices (`../docs/rebuild-plan.md`).
+- **Status:** scaffold plus the slice 1 and 4a goal rules, the slice 1b Hijri calendar, the slice 2a and 2b accounts, the slice 3a dhikr catalog and Library, the slice 3b custom dhikrs, tags, local profiles and change queue, the slice 3c private audio uploads, and the slice 3d practice settings. A placeholder onboarding screen and home screen prove the wiring; features arrive in slices (`../docs/rebuild-plan.md`).
 
 ## Modules
 
@@ -45,15 +45,19 @@ Every ID is an `AwradID`, and every ID the app generates is a UUIDv7 ([`contract
 - **Check:** `scripts/check-uuid-generation.py` (in `scripts/validate`, after its `--self-test`) rejects `UUID()`, `UUID.init()` and `NSUUID()` in `AwradKit/Sources` and `AwradNext`, since Foundation only makes v4. Tests may use them for throwaway names.
 - **Runner:** `IdentityFixtures` runs `identity/v1/fixtures/`; `UUIDv7GeneratorTests` checks that consecutive IDs are valid v7 that sort by time.
 
-## Goal model and rules (slice 1)
+## Goal model and rules (slices 1 and 4a)
 
-`AwradDomain` models the goal of [`contracts/goal-model/v1`](../contracts/goal-model/v1/README.md) as Sendable value types in `Goal.swift`: `Schedule`, `ActivePeriod`, `PausedRange`, `CountPolicy` (with its `CountThreshold` streak threshold), `GoalSession`, `Requirement`, `CompletionPolicy` and `CountEntry`.
-- **Days** are `CalendarDay` (year, month, day), not `Date` or `DateComponents`. All day arithmetic goes through one Gregorian calendar fixed to UTC, never `Calendar.current`. `CalendarDay` is `Strideable`, so a window is a walkable `ClosedRange<CalendarDay>`.
-- **Only valid goals exist.** `Goal`'s properties are read-only and its initializer `throws(GoalValidationError)`, whose `codes` are the contract's error codes in alphabetical order (`Goal+Validity.swift`, run against `goal_validity.json`). Every caller (fixture decoding, tests, later sync and import) goes through it, so the rules never handle a missing target.
-- **One file per rule**, all pure: `EffectivePracticeDay.resolve`, `Goal.isDue(on:)`, `Goal.standing(on:counts:weekStart:)`, `Goal.daysPerPeriodStanding(…)`, `Goal.isCompleted(on:counts:)` and `Goal.currentStreak(…)`. They share `GoalEvaluation.swift`, the only place that decides whether a window meets its numbers (each session its own).
-- **Fixture runner:** `AwradTesting/FixtureLoader.swift` reads `contracts/<model>/v<N>/fixtures/<rule>.json` from the repository (found by walking up from `#filePath`) and fails on a missing file, zero cases or a case that won't decode. `GoalModelFixtures` decodes each rule's `given` into domain values. `AwradDomainTests/GoalModelFixtureTests` runs every case as a parameterized test named by case ID.
+`AwradDomain` models [`contracts/goal-model/v1`](../contracts/goal-model/v1/README.md) as Sendable value types:
+- `Goal.swift` and `GoalSettings+Parts.swift`: `Goal` (what a rule evaluates on one day: a version's `GoalSettings` plus pauses and excused days), `Schedule`, `ActivePeriod`, `PausedRange`, `CountPolicy` with its `StreakThreshold`, `GoalSession` with its `SessionKind` (the ID is derived from the kind), `Requirement`, `CompletionPolicy`, `MakeUp` and `CountEntry`.
+- `GoalDocument.swift`: `GoalTimeline` (dated `GoalVersion`s, pauses, excused days, `GoalEnding`), `GoalDocument` (adds the dhikr ID, `DhikrSnapshot`, name and `GoalCounts`), `GoalOrder` and `CountLogEntry`. A lone `Goal` stands for a one-version timeline (`GoalTimeline(goal)`).
+- **Days** are `CalendarDay` (year, month, day), not `Date` or `DateComponents`. Day arithmetic is plain ordinal arithmetic in the proleptic Gregorian calendar, never `Calendar.current`. `CalendarDay` is `Strideable`, so a window is a walkable `ClosedRange<CalendarDay>`.
+- **Only valid goals exist.** `GoalSettings` and `GoalTimeline` have read-only properties and initializers that `throw(GoalValidationError)`, whose `codes` are the contract's error codes in alphabetical order (`Goal+Validity.swift`, run against `goal_validity.json`). Every caller (fixture decoding, tests, later sync and import) goes through them, so the rules never handle a missing target.
+- **One file per rule**, all pure. On a single day: `EffectivePracticeDay.resolve`, `Goal.isDue(on:)`, `Goal.standing(…)`, `Goal.daysPerPeriodStanding(…)` and `Goal.isCompleted(…)`. Across days, on a timeline, each day judged by its version (`GoalTimeline+Versions`): `dueDayStatuses` (make-up), `streak`, `consistency`, `dailyPace`, `todayRing`, `excuseRefusal`/`unexcuseRefusal`, `listSection`/`finish`; plus `GoalList` (placement and order), `GoalOrder.merge` and `CountAttribution`. They share `GoalEvaluation.swift`: the count ledger, the units a day is judged on, the only place that decides whether a window meets its numbers, and `TimelineEvaluator`.
+- **Fixture runner:** `AwradTesting/FixtureLoader.swift` reads `contracts/<model>/v<N>/fixtures/<rule>.json` from the repository (found by walking up from `#filePath`) and fails on a missing file, zero cases or a case that won't decode. `GoalModelFixtures` decodes each rule's `given` into domain values. `AwradDomainTests/GoalModelFixtureTests` and `GoalTimelineFixtureTests` run every case as a parameterized test named by case ID.
 
-The fixtures are the spec. Persistence of the full goal is slice 3; `GoalRecord` stores only a placeholder subset until then.
+- **Sync (contracts/sync/v1, slice 4):** `SyncEntityType.goal` and `.goalOrder`, `SyncDocument.goal(GoalDocument)` and `.goalOrder(GoalOrder)` with their wire codec (`Sync/GoalDocument+JSON.swift`; schedule sets are written Monday first, the rest ascending). `GoalDocumentValidation` checks a goal document's structure, then the goal rules as field errors (`goal_document_validity.json`); `GoalDocument(json:)` throws its errors. A `goal_field_immutable` rejection restores the server's copy like other rejections, and a goal conflict whose server copy is deleted removes the goal with the notice. A goal's command references its custom dhikr and a goal order's its goals (`OutboxCommand.references`). Deleting a custom dhikr ends its goals locally (`SyncRules.save(_:queue:today:in:)`), and when its create was never sent drops their unsent commands. A goal `conflict` takes the server's copy with the `goal_edit_not_applied` notice unless nothing was lost; a goal order merges against its base like the practice policy (`SyncEntityType.mergesAgainstBase`). `queueAll` leaves the goal order out; the profile merge adds goals and appends them to the account's order. Each profile stores them as `GoalDocumentRecord` and `GoalOrderRecord` (with its base). Not yet built (4b): the goal order decided after the first complete pull, and the screens that save goals.
+
+The fixtures are the spec. The goal screens and their store are slice 4b; the old `GoalRecord` in the shared store is still a placeholder subset.
 
 ## Hijri calendar (slice 1b)
 
@@ -239,7 +243,7 @@ See `FeatureOnboarding`.
 
 ## Persistence (ADR 0002)
 
-- **Goals:** SwiftData behind the `GoalRepository` port, through `SwiftDataGoalRepository`, a `@ModelActor` (a placeholder subset until slice 3), still in the shared `AwradNext` store; slice 4 moves goals into the profiles.
+- **Goals:** SwiftData behind the `GoalRepository` port, through `SwiftDataGoalRepository`, a `@ModelActor` (a placeholder subset until slice 4b), still in the shared `AwradNext` store; slice 4 moves goals into the profiles.
 - **Personal data** (slice 3b): one SwiftData store per local profile, plus `registry.json` (above).
 - **Small flags:** `UserDefaults` behind ports, through actors.
 - **Secrets:** the Keychain through `KeychainStore` (ADR 0005); only the account session uses it.

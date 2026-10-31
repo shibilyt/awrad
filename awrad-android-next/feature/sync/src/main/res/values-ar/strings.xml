@@ -100,4 +100,9 @@
     <string name="sync_reason_entity_id_invalid">إعدادات العبادة هذه تخص حسابًا آخر.</string>
     <string name="sync_hijri_replaced_title">استُبدلت تصحيحات التقويم الهجري</string>
     <string name="sync_reason_hijri_corrections_replaced">غيّر جهاز آخر تصحيحات التقويم الهجري في الوقت نفسه، وتعذّر الجمع بينهما. احتُفظ بتصحيحاته، وحُفظت بقية إعداداتك.</string>
+    <string name="sync_conflict_goals">تغيّرت أهدافك على جهاز آخر بعد أن غيّرتها هنا.</string>
+    <string name="sync_reason_goal_limit">لدى حسابك بالفعل 300 هدف قيد التنفيذ، أو 2000 هدف إجمالًا.</string>
+    <string name="sync_reason_goal_field_immutable">لا يمكن تغيير ذكر الهدف ولا مشاركة عدّه. استُعيد الهدف؛ ابدأ هدفًا جديدًا بدلًا من ذلك.</string>
+    <string name="sync_goal_edit_not_applied_title">تغيّر الهدف على جهاز آخر</string>
+    <string name="sync_reason_goal_edit_not_applied">تغيّر هذا الهدف على جهاز آخر أولًا، فلم يُطبَّق تغييرك. يظهر الآن كما هو على الجهاز الآخر.</string>
 </resources>

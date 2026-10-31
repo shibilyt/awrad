@@ -1,0 +1,1487 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "goal_version_on_day",
+  "description": "Which dated version a goal document is judged by on a day, and the `goal` it resolves into: the version whose from is the latest on or before the day (the first version for earlier days), plus the document's pauses and excused days; an ended goal's end caps the active period.",
+  "references": [
+    "CONTEXT.md#goal-language (Dated version)",
+    "docs/slices/04-goals-decisions.md decision 23",
+    "docs/slices/04-goals.md (Domain and fixtures)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "document",
+      "date"
+    ],
+    "properties": {
+      "document": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_document"
+      },
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "version",
+      "goal"
+    ],
+    "properties": {
+      "version": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99,
+        "description": "Index into the document's versions."
+      },
+      "goal": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "before_creation_uses_first",
+      "description": "A day before the first version (here, before creation) is judged by the first version.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-10",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 70,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-20",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-12-31",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 200,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "date": "2026-09-30"
+      },
+      "expect": {
+        "version": 0,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      }
+    },
+    {
+      "id": "creation_day_first_version",
+      "description": "The day the goal was created uses its first version.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-10",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 70,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-20",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-12-31",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 200,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "date": "2026-10-01"
+      },
+      "expect": {
+        "version": 0,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      }
+    },
+    {
+      "id": "day_before_next_version",
+      "description": "The first version is in force until the day before the next one starts.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-10",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 70,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-20",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-12-31",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 200,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "date": "2026-10-09"
+      },
+      "expect": {
+        "version": 0,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      }
+    },
+    {
+      "id": "next_version_from_its_day",
+      "description": "A version is in force from its own from day: the edit made on 10 October applies from 10 October.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-10",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 70,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-20",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-12-31",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 200,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "date": "2026-10-10"
+      },
+      "expect": {
+        "version": 1,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        }
+      }
+    },
+    {
+      "id": "middle_version_until_next",
+      "description": "The middle version lasts until the day before the latest starts.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-10",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 70,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-20",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-12-31",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 200,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "date": "2026-10-19"
+      },
+      "expect": {
+        "version": 1,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        }
+      }
+    },
+    {
+      "id": "latest_version_onwards",
+      "description": "The latest version is in force from its day on, including the future.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-10",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 70,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-20",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-12-31",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 200,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "date": "2027-01-15"
+      },
+      "expect": {
+        "version": 2,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-12-31",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 200,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      }
+    },
+    {
+      "id": "pauses_and_excused_days_belong_to_the_goal",
+      "description": "Pauses and excused days aren't versioned: every day's goal carries all of them.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-10",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 70,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [
+            {
+              "from": "2026-10-05",
+              "to": "2026-10-06"
+            }
+          ],
+          "excused": [
+            "2026-10-03",
+            "2026-10-12"
+          ],
+          "ended": null
+        },
+        "date": "2026-10-04"
+      },
+      "expect": {
+        "version": 0,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-05",
+              "to": "2026-10-06"
+            }
+          ],
+          "excused": [
+            "2026-10-03",
+            "2026-10-12"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      }
+    },
+    {
+      "id": "ended_sets_end_date",
+      "description": "A goal ended on 25 October (End goal) is judged as if its active period ended that day, on every day.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-10",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 70,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": {
+            "on": "2026-10-25",
+            "reason": "user"
+          }
+        },
+        "date": "2026-10-12"
+      },
+      "expect": {
+        "version": 1,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-25",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        }
+      }
+    },
+    {
+      "id": "ended_after_own_end_keeps_end",
+      "description": "Ended (by date) after the version's own end date: the earlier end stays.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-10-30",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": {
+            "on": "2026-10-31",
+            "reason": "date"
+          }
+        },
+        "date": "2026-10-05"
+      },
+      "expect": {
+        "version": 0,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-30",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      }
+    },
+    {
+      "id": "ended_replaces_number_of_days",
+      "description": "A goal for 30 days ended on 15 October: its end becomes the date, and the number of days goes (never both).",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": 30
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": {
+            "on": "2026-10-15",
+            "reason": "user"
+          }
+        },
+        "date": "2026-10-05"
+      },
+      "expect": {
+        "version": 0,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-15",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      }
+    },
+    {
+      "id": "ended_after_number_of_days_keeps_them",
+      "description": "Ended after a 10-day goal's last day (10 October): the number of days stays.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": 10
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": {
+            "on": "2026-10-12",
+            "reason": "date"
+          }
+        },
+        "date": "2026-10-05"
+      },
+      "expect": {
+        "version": 0,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": 10
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      }
+    },
+    {
+      "id": "same_day_as_end_of_later_version",
+      "description": "Each version keeps its own end: the latest version's end date isn't applied to earlier days.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-10",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 70,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-20",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-12-31",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 200,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "date": "2026-10-15"
+      },
+      "expect": {
+        "version": 1,
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -17,7 +17,16 @@ public enum class EntityType(public val wire: String) {
 
     /** The account practice policy (slice 3d): one per account, its ID the account's, never deleted. */
     PRACTICE_POLICY("practice_policy"),
+
+    /** A goal (slice 4): the whole goal document ([app.awrad.core.domain.goal.GoalJson]), with a new UUIDv7. */
+    GOAL("goal"),
+
+    /** The user's order of My Goals (slice 4): one per account, its ID the account's, never deleted. */
+    GOAL_ORDER("goal_order"),
     ;
+
+    /** One per account, merged by the phone on a conflict against the [LocalEntity.baseDocument] it keeps. */
+    public val mergesConflicts: Boolean get() = this == PRACTICE_POLICY || this == GOAL_ORDER
 
     public companion object {
         public fun fromWire(wire: String): EntityType? = entries.firstOrNull { it.wire == wire }
@@ -58,9 +67,9 @@ public enum class EntityState(public val wire: String) {
  * An entity present on the phone: its [document] and the last server version this phone has seen of it
  * ([knownVersion], 0 while the server hasn't confirmed it). Deleted entities aren't kept.
  *
- * A [practice policy][EntityType.PRACTICE_POLICY] also keeps [baseDocument]: the server copy its document was edited
- * from (the default policy when the phone knows none), which a conflict merges against. It's null for every other
- * entity.
+ * A [practice policy][EntityType.PRACTICE_POLICY] or [goal order][EntityType.GOAL_ORDER] also keeps [baseDocument]:
+ * the server copy its document was edited from (the default policy, or an empty order, when the phone knows none),
+ * which a conflict merges against. It's null for every other entity.
  */
 public data class LocalEntity(
     val key: EntityKey,

@@ -1,6 +1,8 @@
 package app.awrad.core.domain.sync
 
 import app.awrad.core.domain.AwradId
+import app.awrad.core.domain.goal.GoalJson
+import app.awrad.core.domain.goal.GoalOrderJson
 import app.awrad.core.domain.personal.PersonalDocument
 
 /**
@@ -16,20 +18,23 @@ public object Outbox {
      *   `command_id`, `base_version` and position; but a delete replacing a never-sent create (`base_version` 0)
      *   removes it, since the server never heard of the entity;
      * - a replacement whose document names an entity with a never-sent put later in the queue (a tag in
-     *   `tag_ids`, or a `dhikr_personal`'s own custom dhikr) moves to just after the last such put, so the server
-     *   knows what it names when it arrives; everything else keeps its relative order;
+     *   `tag_ids`, a `dhikr_personal`'s own custom dhikr, a goal's custom dhikr, a goal in a `goal_order`) moves to
+     *   just after the last such put, so the server knows what it names when it arrives; everything else keeps its
+     *   relative order;
      * - otherwise a new command goes at the end, on the last queued command's `base_version` + 1, or on
      *   [knownVersion] when nothing is queued for the entity;
-     * - deleting a custom dhikr also drops never-sent commands for its `dhikr_personal`;
+     * - deleting a custom dhikr also drops never-sent commands for its `dhikr_personal`, and, when its create was
+     *   never sent, its goals' never-sent commands (the server could only reject them). Its goals end locally
+     *   without commands: the server ends them itself (the receipt's `cascaded`);
      * - deleting a tag queues only the tag delete, and takes the tag out of every never-sent `dhikr_personal`
      *   command in place: the server removes it from the records itself (the receipt's `cascaded`).
      */
     public fun enqueue(outbox: List<OutboxCommand>, knownVersion: Long, edit: LocalEdit): List<OutboxCommand> {
         val lastIndex = outbox.indexOfLast { it.key == edit.key }
         val last = outbox.getOrNull(lastIndex)
+        val dropsCreate = last != null && !last.sent && edit.op == SyncOp.DELETE && last.baseVersion == 0L
         val queued = when {
-            last != null && !last.sent && edit.op == SyncOp.DELETE && last.baseVersion == 0L ->
-                outbox.filterIndexed { index, _ -> index != lastIndex }
+            dropsCreate -> outbox.filterIndexed { index, _ -> index != lastIndex }
             last != null && !last.sent ->
                 replaced(outbox, lastIndex, last.copy(op = edit.op, document = edit.document))
             else -> outbox + OutboxCommand(
@@ -45,7 +50,9 @@ public object Outbox {
             edit.op != SyncOp.DELETE -> queued
             edit.key.type == EntityType.CUSTOM_DHIKR -> {
                 val personal = personalKeyOf(edit.key.id)
-                queued.filterNot { it.key == personal && !it.sent }
+                queued.filterNot { command ->
+                    !command.sent && (command.key == personal || dropsCreate && command.isGoalOf(edit.key.id))
+                }
             }
             edit.key.type == EntityType.USER_TAG -> rewriteTag(queued, edit.key.id, replacement = null)
             else -> queued
@@ -70,15 +77,27 @@ public object Outbox {
     }
 
     /**
-     * The entities [command]'s document names, which the server must know first: a `dhikr_personal` put's tags
-     * and its own dhikr (only a custom dhikr can be queued). Custom dhikr and tag documents name nothing.
+     * The entities [command]'s document names, which the server must know first (only a custom dhikr can be queued
+     * among the dhikrs): a `dhikr_personal` put's tags and its own dhikr, a goal's dhikr, and a goal order's goals.
+     * Custom dhikr, tag and practice policy documents name nothing.
      */
     private fun referencesOf(command: OutboxCommand): Set<EntityKey> {
-        val document = command.document
-        if (command.key.type != EntityType.DHIKR_PERSONAL || document == null) return emptySet()
-        return PersonalDocument.tagIds(document).mapTo(HashSet()) { EntityKey(EntityType.USER_TAG, it) } +
-            EntityKey(EntityType.CUSTOM_DHIKR, command.key.id)
+        val document = command.document ?: return emptySet()
+        return when (command.key.type) {
+            EntityType.DHIKR_PERSONAL ->
+                PersonalDocument.tagIds(document).mapTo(HashSet()) { EntityKey(EntityType.USER_TAG, it) } +
+                    EntityKey(EntityType.CUSTOM_DHIKR, command.key.id)
+            EntityType.GOAL ->
+                setOfNotNull(GoalJson.dhikrIdOf(document)?.let { EntityKey(EntityType.CUSTOM_DHIKR, it) })
+            EntityType.GOAL_ORDER -> GoalOrderJson.decode(document)?.goalIds.orEmpty()
+                .mapTo(HashSet()) { EntityKey(EntityType.GOAL, it) }
+            EntityType.CUSTOM_DHIKR, EntityType.USER_TAG, EntityType.PRACTICE_POLICY -> emptySet()
+        }
     }
+
+    /** Whether this is a command for a goal of the dhikr [dhikrId]; a delete carries no document, so it isn't. */
+    private fun OutboxCommand.isGoalOf(dhikrId: AwradId): Boolean =
+        key.type == EntityType.GOAL && document?.let(GoalJson::dhikrIdOf) == dhikrId
 
     /**
      * [outbox] with the tag [tagId] replaced by [replacement] (or taken out, when null) in every never-sent

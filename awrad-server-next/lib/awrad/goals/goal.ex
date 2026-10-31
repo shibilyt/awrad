@@ -1,21 +1,24 @@
 defmodule Awrad.Goals.Goal do
   @moduledoc """
-  A goal as the rules see it: schedule, active period, pauses, count policy,
-  sessions, requirement and completion policy (`CONTEXT.md`, goal language).
+  A goal as a rule evaluates it on one day (`goal` in the schema): one
+  version's settings (`Awrad.Goals.Settings`) plus the goal's pauses and
+  excused days (`CONTEXT.md`, goal language). A whole goal, with every dated
+  version, is an `Awrad.Goals.Timeline`.
 
-  Targets come from `count_policy`, or from each session's own count policy
-  when the goal has sessions. Cumulative and period totals use the target as
-  the total; days per period uses it as the daily target.
+  Targets come from `count_policy`, or from each session's own target when the
+  goal has sessions. Cumulative and period totals use the target as the total;
+  days per period uses it as the daily target.
 
-  Build goals with `new/1`, which rejects invalid ones (`CONTEXT.md`, valid
-  goal): every requirement but tracker needs a target, on the goal or on every
-  session, and a streak threshold must point at a value that is set.
+  Build goals with `new/1`, which rejects invalid ones (`goal_validity`).
   """
 
   alias Awrad.Goals.ActivePeriod
   alias Awrad.Goals.CountPolicy
+  alias Awrad.Goals.MakeUp
   alias Awrad.Goals.PausedRange
+  alias Awrad.Goals.Rules.Validity
   alias Awrad.Goals.Session
+  alias Awrad.Goals.Settings
 
   @typedoc "A day of the week, by name (never a number)."
   @type weekday :: :monday | :tuesday | :wednesday | :thursday | :friday | :saturday | :sunday
@@ -76,10 +79,12 @@ defmodule Awrad.Goals.Goal do
     :schedule,
     :active_period,
     :paused,
+    :excused,
     :count_policy,
     :sessions,
     :requirement,
-    :completion
+    :completion,
+    :make_up
   ]
   defstruct @enforce_keys
 
@@ -87,24 +92,41 @@ defmodule Awrad.Goals.Goal do
           schedule: schedule(),
           active_period: ActivePeriod.t(),
           paused: [PausedRange.t()],
+          excused: [Date.t()],
           count_policy: CountPolicy.t(),
           sessions: [Session.t()],
           requirement: requirement(),
-          completion: completion()
+          completion: completion(),
+          make_up: MakeUp.t()
         }
 
   @typedoc """
-  Why a goal is invalid (fixtures/goal_validity.json):
+  Why a goal is invalid (fixtures/goal_validity.json, README "Validity"):
 
   - `:target_required`: no sessions, not a tracker, and no target;
-  - `:session_target_required`: sessions, not a tracker, and a session
-    without a target;
-  - `:streak_threshold_value_required`: a streak threshold of minimum, target
-    or maximum whose value isn't set. Checked on the goal's own count policy
-    without sessions, on every session's with them (the goal's own policy is
-    unused then).
+  - `:session_target_required`: a session without a target, not a tracker;
+  - `:streak_threshold_value_required`: the streak threshold names a minimum,
+    target or maximum that isn't set (goals without sessions);
+  - `:streak_pace_not_allowed`: `:daily_pace` on anything but a total with an end;
+  - `:end_date_and_duration`: both an end date and a number of days;
+  - `:make_up_not_allowed`: a make-up window on a goal that isn't per due
+    date, or a total counting at `{:amount, n}` with `fill: :streak`;
+  - `:sessions_with_minimum_or_cap`: sessions together with a minimum or cap;
+  - `:session_id_mismatch`: a session ID not derived from its kind;
+  - `:session_duplicate`: two sessions with one ID;
+  - `:session_window_empty`: a `between` window from a time to the same time.
   """
-  @type error :: :session_target_required | :streak_threshold_value_required | :target_required
+  @type error ::
+          :end_date_and_duration
+          | :make_up_not_allowed
+          | :session_duplicate
+          | :session_id_mismatch
+          | :session_target_required
+          | :session_window_empty
+          | :sessions_with_minimum_or_cap
+          | :streak_pace_not_allowed
+          | :streak_threshold_value_required
+          | :target_required
 
   @typedoc "Every field of `t:t/0`, as a keyword list or map."
   @type attrs :: [{atom(), term()}] | %{optional(atom()) => term()}
@@ -113,40 +135,47 @@ defmodule Awrad.Goals.Goal do
   Builds a valid goal from all of its fields, or returns every reason it's
   invalid, sorted alphabetically.
 
-  This is the only way to construct a goal: the rules assume a valid one and
-  have no fallback for an invalid one. A missing or unknown field raises, like
-  `struct!/2`.
+  This is the only way to construct a goal from outside: the rules assume a
+  valid one and have no fallback for an invalid one. A missing or unknown
+  field raises, like `struct!/2`.
   """
   @spec new(attrs()) :: {:ok, t()} | {:error, [error(), ...]}
   def new(attrs) do
     goal = struct!(__MODULE__, attrs)
 
-    case errors(goal) do
+    case Validity.goal_errors(goal) do
       [] -> {:ok, goal}
       errors -> {:error, errors}
     end
   end
 
-  defp errors(%__MODULE__{sessions: [], count_policy: policy} = goal) do
-    [
-      {:target_required, needs_target?(goal) and is_nil(policy.target)},
-      {:streak_threshold_value_required, not CountPolicy.streak_threshold_set?(policy)}
-    ]
-    |> codes()
+  @doc "The goal one version's settings describe, with the goal's pauses and excused days."
+  @spec from_settings(Settings.t(), [PausedRange.t()], [Date.t()]) :: t()
+  def from_settings(%Settings{} = settings, paused, excused) do
+    %__MODULE__{
+      schedule: settings.schedule,
+      active_period: settings.active_period,
+      paused: paused,
+      excused: excused,
+      count_policy: settings.count_policy,
+      sessions: settings.sessions,
+      requirement: settings.requirement,
+      completion: settings.completion,
+      make_up: settings.make_up
+    }
   end
 
-  defp errors(%__MODULE__{sessions: sessions} = goal) do
-    policies = Enum.map(sessions, fn %Session{count_policy: policy} -> policy end)
-
-    [
-      {:session_target_required, needs_target?(goal) and Enum.any?(policies, &is_nil(&1.target))},
-      {:streak_threshold_value_required,
-       not Enum.all?(policies, &CountPolicy.streak_threshold_set?/1)}
-    ]
-    |> codes()
+  @doc "The versioned part of a goal."
+  @spec settings(t()) :: Settings.t()
+  def settings(%__MODULE__{} = goal) do
+    %Settings{
+      schedule: goal.schedule,
+      active_period: goal.active_period,
+      count_policy: goal.count_policy,
+      sessions: goal.sessions,
+      requirement: goal.requirement,
+      completion: goal.completion,
+      make_up: goal.make_up
+    }
   end
-
-  defp needs_target?(%__MODULE__{requirement: requirement}), do: requirement != :tracker
-
-  defp codes(checks), do: for({code, true} <- checks, do: code) |> Enum.sort()
 end

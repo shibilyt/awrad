@@ -44,8 +44,9 @@ public sealed interface Receipt {
 
 /**
  * An entity the server changed as a cascade of a delete, at the same revision (`$defs/cascaded_change`): a
- * `dhikr_personal` a tag delete took the tag out of ([EntityState.ACTIVE]), or a deleted custom dhikr's
- * `dhikr_personal` ([EntityState.DELETED]). Its document arrives in the changes feed.
+ * `dhikr_personal` a tag delete took the tag out of ([EntityState.ACTIVE]), a deleted custom dhikr's
+ * `dhikr_personal` ([EntityState.DELETED]), or a goal of it the server ended ([EntityState.ACTIVE]). Its document
+ * arrives in the changes feed.
  */
 public data class CascadedChange(val key: EntityKey, val state: EntityState, val version: Long, val revision: Long)
 
@@ -73,6 +74,18 @@ public enum class RejectionCode(public val wire: String) {
 
     /** A `practice_policy` whose `entity_id` isn't the account's ID (slice 3d). */
     ENTITY_ID_INVALID("entity_id_invalid"),
+
+    /** A goal put would take the account past 300 goals that haven't ended, or 2,000 in all (slice 4). */
+    GOAL_LIMIT_REACHED("goal_limit_reached"),
+
+    /** A goal put changed a stored goal's `dhikr_id` or `counts`, which never change (slice 4). */
+    GOAL_FIELD_IMMUTABLE("goal_field_immutable"),
+
+    /**
+     * Not a rejection: the notice when a goal edit lost to another device's, so the phone took the server's goal and
+     * offers to do it again (decision 44).
+     */
+    GOAL_EDIT_NOT_APPLIED("goal_edit_not_applied"),
 
     /**
      * Not a rejection: the notice (`$defs/notice_code`) when merging a conflicting `practice_policy` dropped this
@@ -104,6 +117,9 @@ public enum class FieldErrorCode(public val wire: String) {
 
     /** A value is out of order with another, such as a Qur'an reference whose `ayah_end` is below `ayah_start`. */
     RANGE("range"),
+
+    /** A goal's `dhikr_id` or `counts` differs from the stored goal's (`goal_field_immutable`). */
+    IMMUTABLE("immutable"),
     ;
 
     public companion object {

@@ -71,10 +71,10 @@ defmodule Awrad.Goals.Rules.Requirement do
     {Counts.sum(index, days, &Counts.goal_total(goal, &1)), sessions}
   end
 
-  defp session_standing(%Session{id: id, count_policy: policy}, index, days) do
+  defp session_standing(%Session{id: id, target: target}, index, days) do
     progress = Counts.sum(index, days, &Map.get(&1, id, 0))
-    status = if Counts.meets?(progress, policy, :target), do: :met, else: :not_met
-    %SessionStanding{id: id, progress: progress, target: policy.target, status: status}
+    status = if Counts.meets_target?(progress, target), do: :met, else: :not_met
+    %SessionStanding{id: id, progress: progress, target: target, status: status}
   end
 
   defp status(_goal, false = _due?, _progress, _sessions), do: :not_due
@@ -93,7 +93,7 @@ defmodule Awrad.Goals.Rules.Requirement do
   defp due_in?(goal, _window, date, corrections), do: Schedule.due?(goal, date, corrections)
 
   defp met?(%Goal{sessions: []} = goal, progress, _sessions),
-    do: Counts.meets?(progress, goal.count_policy, :target)
+    do: Counts.meets_target?(progress, goal.count_policy.target)
 
   defp met?(_goal, _progress, sessions), do: Enum.all?(sessions, &(&1.status == :met))
 end

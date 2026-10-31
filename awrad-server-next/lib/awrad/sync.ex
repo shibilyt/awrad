@@ -2,19 +2,19 @@ defmodule Awrad.Sync do
   @moduledoc """
   The change queue (slice 3b, root ADR-2026-10-28 "The change queue",
   `contracts/sync/v1/`): how a user's custom dhikrs, tags, per-dhikr
-  records and practice policy (slice 3d) move between their phones, the web
-  and the server.
+  records, practice policy (slice 3d), goals and goal order (slice 4) move
+  between their phones, the web and the server.
 
   The only entry point to the context. Ownership is the `user_id` the caller
   authenticated; nothing here reads an account from the request.
 
     * `validate_batch/1`: the batch envelope (a 422 when it's wrong).
-    * `apply_batch/2`: applies the commands in order, one receipt each.
+    * `apply_batch/3`: applies the commands in order, one receipt each.
     * `changes/3`: one page of the changes feed.
     * `prune/1`: drops receipts older than 90 days.
   """
 
-  use Boundary, deps: [Awrad, Awrad.Audio, Awrad.Dhikrs, Awrad.Hijri], exports: []
+  use Boundary, deps: [Awrad, Awrad.Audio, Awrad.Dhikrs, Awrad.Goals, Awrad.Hijri], exports: []
 
   import Ecto.Query
 
@@ -39,9 +39,12 @@ defmodule Awrad.Sync do
   @doc """
   Applies an envelope-valid batch for `user_id`. Returns one receipt per
   command, in order, and the account's head revision after the batch.
+
+  `today` is the UTC date the server ends goals on (those of a deleted
+  custom dhikr); `nil` means the current one.
   """
-  @spec apply_batch(Ecto.UUID.t(), [map(), ...]) :: batch_result()
-  defdelegate apply_batch(user_id, commands), to: Commands
+  @spec apply_batch(Ecto.UUID.t(), [map(), ...], Date.t() | nil) :: batch_result()
+  defdelegate apply_batch(user_id, commands, today \\ nil), to: Commands
 
   @doc "The changes after revision `after_revision`, `limit` (1–500) at a time."
   @spec changes(Ecto.UUID.t(), non_neg_integer(), 1..500) :: page()

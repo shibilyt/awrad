@@ -108,8 +108,9 @@ actor ProfileDatabase {
             for tag in personal.tagIDs where state.document(SyncEntityKey(.userTag, tag)) == nil {
                 throw .notFound
             }
-        case .practicePolicy, nil:
-            // The practice policy is saved through `savePolicy`, never as a library edit.
+        case .practicePolicy, .goal, .goalOrder, nil:
+            // The practice policy is saved through `savePolicy`, and goals (slice 4b) through their
+            // own store, never as a library edit.
             throw .notFound
         }
     }

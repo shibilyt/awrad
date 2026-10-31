@@ -1,0 +1,334 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "goal_order_merge",
+  "description": "Merging a conflicting goal_order instead of asking (like the practice policy): unchanged locally, the phone takes theirs; otherwise its own order wins, goals the server dropped since the base go, and goals the server added since the base are appended in its order. The result is queued on the server's version when it differs from theirs.",
+  "references": [
+    "docs/slices/04-goals.md question 4",
+    "contracts/practice-settings/v1/README.md (Syncing the policy)",
+    "docs/slices/04-goals-decisions.md decision 25"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "base",
+      "mine",
+      "theirs"
+    ],
+    "properties": {
+      "base": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_order_document",
+        "description": "The server copy mine was edited from; {\"goal_ids\": []} when the phone knew none."
+      },
+      "mine": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_order_document"
+      },
+      "theirs": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_order_document",
+        "description": "The server's current copy (the conflict receipt's current.document)."
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "document",
+      "requeue"
+    ],
+    "properties": {
+      "document": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_order_document"
+      },
+      "requeue": {
+        "type": "boolean"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "unchanged_locally_takes_theirs",
+      "description": "Mine equals the base: take theirs, send nothing.",
+      "given": {
+        "base": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        },
+        "mine": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        },
+        "theirs": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000003",
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000002"
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000003",
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000002"
+          ]
+        },
+        "requeue": false
+      }
+    },
+    {
+      "id": "local_reorder_wins",
+      "description": "Both reordered: this phone's order wins and is sent.",
+      "given": {
+        "base": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        },
+        "mine": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        },
+        "theirs": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000003",
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001"
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        },
+        "requeue": true
+      }
+    },
+    {
+      "id": "server_added_goal_appended",
+      "description": "Another device added goal 4 to the order: it goes after this phone's order.",
+      "given": {
+        "base": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        },
+        "mine": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000003",
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001"
+          ]
+        },
+        "theirs": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000003",
+            "0192f100-0000-7000-8000-000000000004"
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000003",
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000004"
+          ]
+        },
+        "requeue": true
+      }
+    },
+    {
+      "id": "server_dropped_goal_goes",
+      "description": "Goal 2 left the server's order (deleted elsewhere): it goes from the result too.",
+      "given": {
+        "base": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        },
+        "mine": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000003",
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001"
+          ]
+        },
+        "theirs": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000003",
+            "0192f100-0000-7000-8000-000000000001"
+          ]
+        },
+        "requeue": true
+      }
+    },
+    {
+      "id": "locally_dropped_goal_stays_dropped",
+      "description": "This phone dropped goal 2: it stays out even though the server still has it.",
+      "given": {
+        "base": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        },
+        "mine": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000003",
+            "0192f100-0000-7000-8000-000000000001"
+          ]
+        },
+        "theirs": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000003",
+            "0192f100-0000-7000-8000-000000000001"
+          ]
+        },
+        "requeue": true
+      }
+    },
+    {
+      "id": "several_added_keep_their_order",
+      "description": "Goals 5 and 4 added elsewhere keep the server's relative order.",
+      "given": {
+        "base": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000002"
+          ]
+        },
+        "mine": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001"
+          ]
+        },
+        "theirs": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000005",
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000004",
+            "0192f100-0000-7000-8000-000000000002"
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000005",
+            "0192f100-0000-7000-8000-000000000004"
+          ]
+        },
+        "requeue": true
+      }
+    },
+    {
+      "id": "result_equals_theirs_nothing_sent",
+      "description": "The merge comes out equal to theirs: nothing to send.",
+      "given": {
+        "base": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000002"
+          ]
+        },
+        "mine": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001"
+          ]
+        },
+        "theirs": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001"
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001"
+          ]
+        },
+        "requeue": false
+      }
+    },
+    {
+      "id": "first_order_against_empty_base",
+      "description": "The phone knew no server order (base empty) and both made one: this phone's wins, the server's other goals are appended.",
+      "given": {
+        "base": {
+          "goal_ids": []
+        },
+        "mine": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001"
+          ]
+        },
+        "theirs": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "goal_ids": [
+            "0192f100-0000-7000-8000-000000000002",
+            "0192f100-0000-7000-8000-000000000001",
+            "0192f100-0000-7000-8000-000000000003"
+          ]
+        },
+        "requeue": true
+      }
+    }
+  ]
+}

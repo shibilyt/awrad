@@ -48,12 +48,18 @@ export type UserTagDocument = Schemas["UserTagDocument"];
 export type DhikrPersonalDocument = Schemas["DhikrPersonalDocument"];
 /** The account practice policy (slice 3d, contracts/practice-settings/v1): one per account, its ID the account's. */
 export type PracticePolicyDocument = Schemas["PracticePolicyDocument"];
+/** A goal (slice 4, contracts/goal-model/v1 `goal_document`); its rules are in src/shared/goals. */
+export type GoalDocument = Schemas["GoalDocument"];
+/** The account's order of My Goals (slice 4): one per account, its ID the account's. */
+export type GoalOrderDocument = Schemas["GoalOrderDocument"];
 
 export interface DocumentOf {
   custom_dhikr: CustomDhikrDocument;
   user_tag: UserTagDocument;
   dhikr_personal: DhikrPersonalDocument;
   practice_policy: PracticePolicyDocument;
+  goal: GoalDocument;
+  goal_order: GoalOrderDocument;
 }
 
 /** An active entity: its ID, the version the server last told us, and its document. */
@@ -70,6 +76,10 @@ export interface SyncState {
   readonly dhikr_personal: Readonly<Record<string, Entity<DhikrPersonalDocument>>>;
   /** At most one, keyed by the account's ID; none until someone chooses practice settings. */
   readonly practice_policy: Readonly<Record<string, Entity<PracticePolicyDocument>>>;
+  /** Goals (slice 4): kept from the feed; the goals feature arrives in slice 4b. */
+  readonly goal: Readonly<Record<string, Entity<GoalDocument>>>;
+  /** At most one, keyed by the account's ID. */
+  readonly goal_order: Readonly<Record<string, Entity<GoalOrderDocument>>>;
   readonly headRevision: number;
 }
 

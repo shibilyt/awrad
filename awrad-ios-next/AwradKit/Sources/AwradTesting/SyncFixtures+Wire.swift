@@ -126,6 +126,8 @@ struct CurrentShape: Decodable {
         let type: SyncEntityType? =
             switch document {
             case .null: nil
+            case let json where json["dhikr_id"] != nil: .goal
+            case let json where json["goal_ids"] != nil: .goalOrder
             case let json where json["kind"] != nil: .customDhikr
             case let json where json["name"] != nil: .userTag
             case let json where json["day_reset"] != nil: .practicePolicy

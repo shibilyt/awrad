@@ -27,6 +27,42 @@ defmodule AwradWeb.SyncControllerTest do
     ]
   }
 
+  @goal %{
+    "dhikr_id" => @builtin,
+    "dhikr_snapshot" => %{
+      "title" => %{"en" => "Subhanallah", "ar" => nil, "ml" => nil},
+      "arabic" => "سُبْحَانَ ٱللَّهِ",
+      "kind" => "dhikr"
+    },
+    "name" => nil,
+    "counts" => "shared",
+    "created_on" => "2026-10-14",
+    "versions" => [
+      %{
+        "from" => "2026-10-14",
+        "schedule" => %{"kind" => "every_day"},
+        "active_period" => %{
+          "start_date" => "2026-10-14",
+          "end_date" => nil,
+          "duration_days" => nil
+        },
+        "count_policy" => %{
+          "minimum" => nil,
+          "target" => 33,
+          "maximum" => nil,
+          "streak_threshold" => "target"
+        },
+        "sessions" => [],
+        "requirement" => %{"type" => "per_due_date"},
+        "completion" => "never",
+        "make_up" => %{"window" => "off", "fill" => "streak"}
+      }
+    ],
+    "paused" => [],
+    "excused" => [],
+    "ended" => nil
+  }
+
   defp put(type, id, base_version, document) do
     %{
       "command_id" => Awrad.UUIDv7.generate(),
@@ -275,7 +311,7 @@ defmodule AwradWeb.SyncControllerTest do
         good,
         "not a command",
         %{good | "command_id" => "ABC"} |> Map.put("extra", true),
-        %{good | "entity_type" => "goal", "op" => "patch", "base_version" => -1},
+        %{good | "entity_type" => "count", "op" => "patch", "base_version" => -1},
         %{good | "document" => []},
         Map.delete(good, "document"),
         delete
@@ -351,6 +387,34 @@ defmodule AwradWeb.SyncControllerTest do
              ]
 
       assert hd(tl(delta["changes"]))["document"] == nil
+    end
+
+    test "200: goals and the goal order come and go through the queue (slice 4)",
+         %{conn: conn, grant: grant} do
+      goal_id = Awrad.UUIDv7.generate()
+      user_id = grant.user.id
+
+      receipts =
+        conn
+        |> bearer(grant)
+        |> post_commands([
+          put("goal", goal_id, 0, @goal),
+          put("goal_order", user_id, 0, %{"goal_ids" => [goal_id, Awrad.UUIDv7.generate()]})
+        ])
+        |> assert_conforms("post_sync_commands")
+
+      assert [%{"status" => "applied"}, %{"status" => "applied"}] = receipts["receipts"]
+
+      page =
+        conn
+        |> bearer(grant)
+        |> get_changes("?after=3")
+        |> assert_conforms("list_sync_changes")
+
+      assert [
+               %{"entity_type" => "goal", "entity_id" => ^goal_id, "document" => @goal},
+               %{"entity_type" => "goal_order", "document" => %{"goal_ids" => [^goal_id]}}
+             ] = page["changes"]
     end
 
     test "200 for a browser with its cookie session (no CSRF needed to read)",

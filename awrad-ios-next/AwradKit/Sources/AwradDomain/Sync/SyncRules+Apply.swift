@@ -33,8 +33,8 @@ extension SyncRules {
             guard change.version >= known else { continue }
             state.setDocument(change.document, for: key)
             state.setKnownVersion(change.version, for: key)
-            // With nothing queued, the policy's base is the server's copy (slice 3d).
-            if key.type == .practicePolicy { state.setBaseDocument(change.document, for: key) }
+            // With nothing queued, the policy's or goal order's base is the server's copy.
+            if key.type.mergesAgainstBase { state.setBaseDocument(change.document, for: key) }
         }
         state.after = page.nextAfter
     }
@@ -47,7 +47,7 @@ extension SyncRules {
     /// |---|---|
     /// | `applied` | Records the version, closes any conflict, and applies its `cascaded` entries |
     /// | `duplicate` | As its original |
-    /// | `conflict` | Keeps the local document, drops later unsent commands for the entity, opens a conflict |
+    /// | `conflict` | Keeps the local document, drops later unsent commands for the entity, opens a conflict; a goal takes the server's (`goalConflict`), and the policy and goal order merge |
     /// | `merged` | Moves every local use of the tag ID to the surviving tag |
     /// | `gone` | Removes the entity |
     /// | `rejected` | Restores the server's copy, or removes the entity when there is none (not the practice policy) |
@@ -83,8 +83,8 @@ extension SyncRules {
             case .applied(_, let version, _, let cascaded):
                 applied(command, version: version, cascaded: cascaded, in: &state)
             case .conflict(_, let current):
-                if conflict(key, current: current, newCommandID: newCommandID, in: &state) {
-                    notices.append(SyncNotice(code: .hijriCorrectionsReplaced, key: key))
+                if let notice = conflict(key, current: current, newCommandID: newCommandID, in: &state) {
+                    notices.append(SyncNotice(code: notice, key: key))
                 }
             case .merged(_, let survivor, let current):
                 merge(tag: key.id, into: survivor, current: current, in: &state)
@@ -137,25 +137,69 @@ extension SyncRules {
         }
         state.setConflict(nil, for: key)
         for cascade in cascaded ?? [] { apply(cascade, to: &state) }
-        if key.type == .practicePolicy, command.op == .put {
+        if key.type.mergesAgainstBase, command.op == .put {
             state.setBaseDocument(command.document, for: key)
         }
     }
 
-    /// Keeps the local document, drops later unsent commands and opens a conflict; the practice
-    /// policy merges instead (`mergePolicy`). Returns whether a policy merge dropped this phone's
-    /// Hijri corrections.
+    /// Keeps the local document, drops later unsent commands and opens a conflict. Three types
+    /// open none: the practice policy and the goal order merge (`mergePolicy`, `mergeGoalOrder`),
+    /// and a goal takes the server's copy (`goalConflict`). Returns the notice to show, if any.
     private static func conflict(
         _ key: SyncEntityKey, current: ServerCopy, newCommandID: () -> AwradID, in state: inout some SyncLocalState
-    ) -> Bool {
-        if key.type == .practicePolicy {
-            return mergePolicy(key, current: current, newCommandID: newCommandID(), in: &state)
+    ) -> RejectionCode? {
+        switch key.type {
+        case .practicePolicy:
+            let replaced = mergePolicy(key, current: current, newCommandID: newCommandID(), in: &state)
+            return replaced ? .hijriCorrectionsReplaced : nil
+        case .goalOrder:
+            mergeGoalOrder(key, current: current, newCommandID: newCommandID(), in: &state)
+            return nil
+        case .goal:
+            return goalConflict(key, current: current, in: &state)
+        case .customDhikr, .userTag, .dhikrPersonal:
+            dropUnsentCommands(for: key, in: &state)
+            state.setKnownVersion(current.version, for: key)
+            let localOp: SyncOp = state.document(key) == nil ? .delete : .put
+            state.setConflict(SyncConflict(key: key, localOp: localOp, server: current), for: key)
+            return nil
         }
+    }
+
+    /// A goal edit or delete that lost: the first to reach the server wins (decision 44). The phone
+    /// takes the server's document and version (a deleted goal comes back), drops later unsent
+    /// commands and opens no conflict. It tells the user (`goal_edit_not_applied`) unless the local
+    /// document already equalled the server's.
+    private static func goalConflict(
+        _ key: SyncEntityKey, current: ServerCopy, in state: inout some SyncLocalState
+    ) -> RejectionCode? {
+        let local = state.document(key)
+        let lost = local == nil || current.state != .active || local != current.document
+        restore(key, to: current, in: &state)
+        return lost ? .goalEditNotApplied : nil
+    }
+
+    /// A conflict on the goal order merges like the practice policy (`GoalOrder.merge`): the
+    /// server's copy becomes the base and known version, and the result is queued on that version
+    /// unless the server already has it.
+    private static func mergeGoalOrder(
+        _ key: SyncEntityKey, current: ServerCopy, newCommandID: AwradID, in state: inout some SyncLocalState
+    ) {
         dropUnsentCommands(for: key, in: &state)
         state.setKnownVersion(current.version, for: key)
-        let localOp: SyncOp = state.document(key) == nil ? .delete : .put
-        state.setConflict(SyncConflict(key: key, localOp: localOp, server: current), for: key)
-        return false
+        guard let theirs = current.document?.goalOrder else { return }
+        let empty = GoalOrder(goalIDs: [])
+        let mine = state.document(key)?.goalOrder ?? empty
+        let base = state.baseDocument(key)?.goalOrder ?? empty
+        let merge = GoalOrder.merge(base: base, mine: mine, theirs: theirs)
+        state.setDocument(.goalOrder(merge.order), for: key)
+        state.setBaseDocument(.goalOrder(theirs), for: key)
+        if merge.requeue {
+            state.appendCommand(
+                OutboxCommand(
+                    commandID: newCommandID, key: key, op: .put, baseVersion: current.version,
+                    document: .goalOrder(merge.order)))
+        }
     }
 
     /// A delete's cascade, applied as a page change would be to an entity the phone has: an active
@@ -178,7 +222,7 @@ extension SyncRules {
     /// version goes back to 0 and its base to the default policy (practice-settings/v1 "Syncing the policy").
     private static func restore(_ key: SyncEntityKey, to copy: ServerCopy?, in state: inout some SyncLocalState) {
         guard let copy, copy.state == .active, let document = copy.document else {
-            if key.type == .practicePolicy {
+            if key.type.mergesAgainstBase {
                 dropUnsentCommands(for: key, in: &state)
                 state.setConflict(nil, for: key)
                 state.setKnownVersion(nil, for: key)
@@ -192,7 +236,7 @@ extension SyncRules {
         state.setDocument(document, for: key)
         state.setKnownVersion(copy.version, for: key)
         state.setConflict(nil, for: key)
-        if key.type == .practicePolicy { state.setBaseDocument(document, for: key) }
+        if key.type.mergesAgainstBase { state.setBaseDocument(document, for: key) }
     }
 
     /// A conflict on the practice policy opens no conflict: the local document merges by setting

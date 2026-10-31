@@ -4,6 +4,7 @@ defmodule Awrad.Goals.Rules.GoalStreakTest do
 
   alias Awrad.Fixtures
   alias Awrad.Fixtures.GoalModel
+  alias Awrad.Fixtures.GoalModel.Encode
   alias Awrad.Goals.Rules
 
   for %{"id" => id, "given" => given, "expect" => expect} <-
@@ -11,16 +12,16 @@ defmodule Awrad.Goals.Rules.GoalStreakTest do
     @given given
     @expect expect
     test id do
-      current =
+      streak =
         Rules.streak(
-          GoalModel.goal(@given["goal"]),
+          GoalModel.goal_input(@given["goal"]),
           GoalModel.counts(@given["counts"]),
           GoalModel.date(@given["date"]),
           GoalModel.week_start(@given["week_start"]),
           GoalModel.hijri_corrections(@given)
         )
 
-      assert %{"current" => current} == @expect
+      assert Encode.result(streak) == @expect
     end
   end
 end

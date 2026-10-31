@@ -28,8 +28,17 @@ commands:
       already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected`
       (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset
       that isn't a ready asset of the account, `audio_mismatch` when its size or type isn't the asset's,
-      contracts/audio/v1; `entity_id_invalid` when a `practice_policy` entity_id isn't the account's ID;
-      `delete_not_allowed` for a `dhikr_personal` or `practice_policy` delete). Receipts are kept for 90 days.
+      contracts/audio/v1; `entity_id_invalid` when a `practice_policy` or `goal_order` entity_id isn't the account's
+      ID; `delete_not_allowed` for a `dhikr_personal`, `practice_policy` or `goal_order` delete; `dhikr_not_found`
+      when a goal names neither a built-in dhikr nor a custom dhikr of the account; `goal_limit_reached` past 300
+      goals that haven't ended or 2,000 in all; `goal_field_immutable` when a put changes a stored goal's `dhikr_id`
+      or `counts`, with an `immutable` error on each). Receipts are kept for 90 days.
+
+
+      **Goals (slice 4).** A goal is one whole document (contracts/goal-model/v1); a put that breaks the goal rules is
+      `rejected` with `document_invalid`. Deleting a custom dhikr ends each of its goals that hasn't ended
+      (`ended.reason: dhikr_deleted`) at the same revision, listed in `cascaded`; a goal put naming an already deleted
+      custom dhikr is applied and stored ended. A `goal_order` keeps only the account's non-deleted goals.
 
 
       `Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts
@@ -141,6 +150,54 @@ commands:
                     - year: 1448
                       month: 5
                       offset_days: -1
+              - command_id: 0192f0c0-0000-7000-8000-000000000009
+                entity_type: goal
+                entity_id: 0192f300-0000-7000-8000-000000000001
+                op: put
+                base_version: 0
+                document:
+                  dhikr_id: 3285e014-551b-46a4-aedc-8b6664b59bc7
+                  dhikr_snapshot:
+                    title:
+                      en: Isthighfar
+                      ar: الاستغفار
+                      ml: ഇസ്തിഗ്ഫാർ
+                    arabic: أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ
+                    kind: dhikr
+                  name: null
+                  counts: shared
+                  created_on: "2026-10-14"
+                  versions:
+                    - from: "2026-10-14"
+                      schedule:
+                        kind: every_day
+                      active_period:
+                        start_date: "2026-10-14"
+                        end_date: null
+                        duration_days: null
+                      count_policy:
+                        minimum: 70
+                        target: 100
+                        maximum: null
+                        streak_threshold: minimum
+                      sessions: []
+                      requirement:
+                        type: per_due_date
+                      completion: never
+                      make_up:
+                        window: within_3_days
+                        fill: streak
+                  paused: []
+                  excused: []
+                  ended: null
+              - command_id: 0192f0c0-0000-7000-8000-00000000000a
+                entity_type: goal_order
+                entity_id: 0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90
+                op: put
+                base_version: 0
+                document:
+                  goal_ids:
+                    - 0192f300-0000-7000-8000-000000000001
               - command_id: 0192f0c0-0000-7000-8000-000000000001
                 entity_type: custom_dhikr
                 entity_id: 0192f0d0-0000-7000-8000-000000000002
@@ -261,6 +318,16 @@ commands:
                   version: 1
                   revision: 14
                   cascaded: null
+                - command_id: 0192f0c0-0000-7000-8000-000000000009
+                  status: applied
+                  version: 1
+                  revision: 15
+                  cascaded: null
+                - command_id: 0192f0c0-0000-7000-8000-00000000000a
+                  status: applied
+                  version: 1
+                  revision: 16
+                  cascaded: null
                 - command_id: 0192f0c0-0000-7000-8000-000000000001
                   status: duplicate
                   original:
@@ -269,7 +336,7 @@ commands:
                     version: 1
                     revision: 11
                     cascaded: null
-              head_revision: 14
+              head_revision: 16
       "400":
         $ref: "../openapi.yaml#/components/responses/BadRequest"
       "401":
@@ -428,9 +495,85 @@ changes:
                       - year: 1448
                         month: 5
                         offset_days: -1
-              next_after: 14
+                - entity_type: goal
+                  entity_id: 0192f300-0000-7000-8000-000000000002
+                  state: active
+                  version: 2
+                  revision: 15
+                  document:
+                    dhikr_id: 0192f0d0-0000-7000-8000-000000000002
+                    dhikr_snapshot:
+                      title:
+                        en: null
+                        ar: null
+                        ml: ഹസ്ബിയല്ലാഹ്
+                      arabic: حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ
+                      kind: dua
+                    name: Before sleep
+                    counts: dedicated
+                    created_on: "2026-10-01"
+                    versions:
+                      - from: "2026-10-01"
+                        schedule:
+                          kind: every_day
+                        active_period:
+                          start_date: "2026-10-01"
+                          end_date: null
+                          duration_days: null
+                        count_policy:
+                          minimum: null
+                          target: 7
+                          maximum: null
+                          streak_threshold: target
+                        sessions: []
+                        requirement:
+                          type: per_due_date
+                        completion: never
+                        make_up:
+                          window: "off"
+                          fill: streak
+                      - from: "2026-10-10"
+                        schedule:
+                          kind: every_day
+                        active_period:
+                          start_date: "2026-10-01"
+                          end_date: null
+                          duration_days: null
+                        count_policy:
+                          minimum: null
+                          target: null
+                          maximum: null
+                          streak_threshold: target
+                        sessions:
+                          - id: between_2100_2330
+                            kind: between
+                            from: "21:00"
+                            to: "23:30"
+                            target: 7
+                        requirement:
+                          type: per_due_date
+                        completion: never
+                        make_up:
+                          window: next_day
+                          fill: target
+                    paused: []
+                    excused:
+                      - "2026-10-06"
+                    ended:
+                      "on": "2026-10-14"
+                      reason: user
+                - entity_type: goal_order
+                  entity_id: 0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90
+                  state: active
+                  version: 1
+                  revision: 16
+                  document:
+                    goal_ids:
+                      - 0192f300-0000-7000-8000-000000000001
+                      - 0192f300-0000-7000-8000-000000000002
+              next_after: 16
               has_more: false
-              head_revision: 14
+              head_revision: 16
       "400":
         $ref: "../openapi.yaml#/components/responses/BadRequest"
       "401":

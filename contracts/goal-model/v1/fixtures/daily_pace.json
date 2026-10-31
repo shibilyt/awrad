@@ -1,0 +1,996 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "daily_pace",
+  "description": "Today's share of a total goal with an end (decision 28): what's left before today (the target, less every count from the start date to yesterday) divided by the due days from today to the last day, rounded up. Recalculated each day, never during it. null when the goal has no end, or today isn't due. Past days keep the end their version had, even after the goal is ended.",
+  "references": [
+    "CONTEXT.md#goal-language (Daily pace)",
+    "docs/slices/04-goals-decisions.md decisions 28, 29 and 33"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "goal",
+      "counts",
+      "date"
+    ],
+    "properties": {
+      "goal": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_input"
+      },
+      "counts": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/count_entry"
+        }
+      },
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      },
+      "hijri_corrections": {
+        "$ref": "urn:awrad:hijri-calendar:1#/$defs/corrections",
+        "description": "The account's Hijri month-start corrections. Absent means none."
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "pace",
+      "remaining",
+      "due_days_left"
+    ],
+    "properties": {
+      "pace": {
+        "oneOf": [
+          {
+            "$ref": "urn:awrad:goal-model:1#/$defs/count"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "remaining": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/count"
+      },
+      "due_days_left": {
+        "oneOf": [
+          {
+            "$ref": "urn:awrad:goal-model:1#/$defs/count"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Due days from today (inclusive) to the last day; null without an end."
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "first_day_even_split",
+      "description": "1,000 in 10 days: 100 a day.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-01"
+      },
+      "expect": {
+        "pace": 100,
+        "remaining": 1000,
+        "due_days_left": 10
+      }
+    },
+    {
+      "id": "rounds_up",
+      "description": "1,000 in 3 days: 334 a day, so the goal finishes on time.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-03",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-01"
+      },
+      "expect": {
+        "pace": 334,
+        "remaining": 1000,
+        "due_days_left": 3
+      }
+    },
+    {
+      "id": "behind_pace_rises",
+      "description": "200 done in three days: 800 left over 7 days is 115 a day.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 50
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 50
+          }
+        ],
+        "date": "2026-10-04"
+      },
+      "expect": {
+        "pace": 115,
+        "remaining": 800,
+        "due_days_left": 7
+      }
+    },
+    {
+      "id": "ahead_pace_drops",
+      "description": "500 done in three days: 500 left over 7 days is 72 a day.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 200
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 200
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-04"
+      },
+      "expect": {
+        "pace": 72,
+        "remaining": 500,
+        "due_days_left": 7
+      }
+    },
+    {
+      "id": "todays_counts_dont_move_today",
+      "description": "Today's share is fixed for the day: counting today doesn't shrink it.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 50
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 50
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 300
+          }
+        ],
+        "date": "2026-10-04"
+      },
+      "expect": {
+        "pace": 115,
+        "remaining": 800,
+        "due_days_left": 7
+      }
+    },
+    {
+      "id": "reached_pace_zero",
+      "description": "Nothing left: the pace is 0.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 1000
+          }
+        ],
+        "date": "2026-10-02"
+      },
+      "expect": {
+        "pace": 0,
+        "remaining": 0,
+        "due_days_left": 9
+      }
+    },
+    {
+      "id": "last_day_takes_the_rest",
+      "description": "On the last day the pace is whatever is left.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-10"
+      },
+      "expect": {
+        "pace": 100,
+        "remaining": 100,
+        "due_days_left": 1
+      }
+    },
+    {
+      "id": "number_of_days",
+      "description": "3,000 for 30 days.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": 30
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 3000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-01"
+      },
+      "expect": {
+        "pace": 100,
+        "remaining": 3000,
+        "due_days_left": 30
+      }
+    },
+    {
+      "id": "weekdays_only",
+      "description": "Monday to Friday for two weeks: 10 due days.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-05",
+            "end_date": "2026-10-16",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-05"
+      },
+      "expect": {
+        "pace": 100,
+        "remaining": 1000,
+        "due_days_left": 10
+      }
+    },
+    {
+      "id": "not_due_today_no_pace",
+      "description": "Saturday isn't due: no share today; 5 due days remain.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-05",
+            "end_date": "2026-10-16",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-10"
+      },
+      "expect": {
+        "pace": null,
+        "remaining": 500,
+        "due_days_left": 5
+      }
+    },
+    {
+      "id": "paused_days_not_counted",
+      "description": "Two paused days ahead leave 8 due days.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-06",
+              "to": "2026-10-07"
+            }
+          ],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-01"
+      },
+      "expect": {
+        "pace": 125,
+        "remaining": 1000,
+        "due_days_left": 8
+      }
+    },
+    {
+      "id": "open_ended_no_pace",
+      "description": "Without an end there is no pace; what's left is still reported.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 300
+          }
+        ],
+        "date": "2026-10-02"
+      },
+      "expect": {
+        "pace": null,
+        "remaining": 700,
+        "due_days_left": null
+      }
+    },
+    {
+      "id": "after_the_end",
+      "description": "After the last day nothing is due.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 300
+          }
+        ],
+        "date": "2026-10-12"
+      },
+      "expect": {
+        "pace": null,
+        "remaining": 700,
+        "due_days_left": 0
+      }
+    },
+    {
+      "id": "before_the_start",
+      "description": "Before the start, nothing is due today; the whole amount is left.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-09-28"
+      },
+      "expect": {
+        "pace": null,
+        "remaining": 1000,
+        "due_days_left": 10
+      }
+    },
+    {
+      "id": "counts_before_start_ignored",
+      "description": "Counts before the start date don't count toward the total.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-09-30",
+            "session": null,
+            "count": 500
+          }
+        ],
+        "date": "2026-10-01"
+      },
+      "expect": {
+        "pace": 100,
+        "remaining": 1000,
+        "due_days_left": 10
+      }
+    },
+    {
+      "id": "raised_target_from_its_version",
+      "description": "The total rose to 2,000 from 5 October: 1,600 left over 6 days is 267.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-10-10",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 1000,
+                "maximum": null,
+                "streak_threshold": "daily_pace"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "cumulative_total"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-05",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-10-10",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 2000,
+                "maximum": null,
+                "streak_threshold": "daily_pace"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "cumulative_total"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-05"
+      },
+      "expect": {
+        "pace": 267,
+        "remaining": 1600,
+        "due_days_left": 6
+      }
+    },
+    {
+      "id": "ending_doesnt_rewrite_past_pace",
+      "description": "Ended on 5 October: the 3rd's pace is still judged against the end it had then.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-10-10",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 1000,
+                "maximum": null,
+                "streak_threshold": "daily_pace"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "cumulative_total"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": {
+            "on": "2026-10-05",
+            "reason": "user"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-03"
+      },
+      "expect": {
+        "pace": 100,
+        "remaining": 800,
+        "due_days_left": 8
+      }
+    }
+  ]
+}

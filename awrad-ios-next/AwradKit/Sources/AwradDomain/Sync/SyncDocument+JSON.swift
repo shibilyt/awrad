@@ -36,6 +36,10 @@ extension SyncDocument {
             } catch {
                 throw SyncDocumentError(type: type, errors: error.errors)
             }
+        case .goal:
+            self = .goal(try GoalDocument(json: json))
+        case .goalOrder:
+            self = .goalOrder(try GoalOrder(json: json))
         }
     }
 
@@ -50,6 +54,10 @@ extension SyncDocument {
             .object(["tag_ids": .array(personal.tagIDs.map { .string($0.description) })])
         case .practicePolicy(let policy):
             policy.json
+        case .goal(let goal):
+            goal.json
+        case .goalOrder(let order):
+            order.json
         }
     }
 }

@@ -293,4 +293,5 @@ private fun conflictText(name: ConflictName): String = when (name) {
     is ConflictName.Tag -> name.name?.let { stringResource(R.string.sync_conflict_tag, it) }
         ?: stringResource(R.string.sync_conflict_tag_unnamed)
     ConflictName.PracticeSettings -> stringResource(R.string.sync_conflict_practice)
+    ConflictName.Goals -> stringResource(R.string.sync_conflict_goals)
 }

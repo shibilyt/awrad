@@ -217,11 +217,39 @@ final class PracticePolicyRecord {
     }
 }
 
+/// A goal (slice 4): its `goal_document`.
+@Model
+final class GoalDocumentRecord {
+    @Attribute(.unique) var id: UUID
+    var document: Data
+
+    init(id: UUID, document: Data) {
+        self.id = id
+        self.document = document
+    }
+}
+
+/// The account's goal order (slice 4): one row, its ID the account's, with the server copy it was
+/// edited from, which a conflict merges against (`GoalOrder.merge`).
+@Model
+final class GoalOrderRecord {
+    @Attribute(.unique) var id: UUID
+    var document: Data
+    /// `nil` for none known.
+    var baseDocument: Data?
+
+    init(id: UUID, document: Data) {
+        self.id = id
+        self.document = document
+    }
+}
+
 /// The schema of a profile's database.
 enum ProfileSchema {
     static let schema = Schema([
         CustomDhikrRecord.self, UserTagRecord.self, DhikrPersonalRecord.self, KnownVersionRecord.self,
         OutboxCommandRecord.self, SyncConflictRecord.self, SyncNoticeRecord.self, SyncPositionRecord.self,
-        AudioUploadRecord.self, AudioNoticeRecord.self, PracticePolicyRecord.self,
+        AudioUploadRecord.self, AudioNoticeRecord.self, PracticePolicyRecord.self, GoalDocumentRecord.self,
+        GoalOrderRecord.self,
     ])
 }

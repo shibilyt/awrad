@@ -116,7 +116,8 @@ public struct LocalShape: Codable, Equatable, Sendable {
                     knownVersion: state.knownVersion(key), document: $0.json,
                     // A policy always has a base: the default policy when the phone knows none.
                     baseDocument: key.type == .practicePolicy
-                        ? (state.baseDocument(key)?.json ?? PracticePolicy.default.json) : nil)
+                        ? (state.baseDocument(key)?.json ?? PracticePolicy.default.json)
+                        : state.baseDocument(key)?.json)
             }
         }
         outbox = state.outbox.map(CommandShape.init)

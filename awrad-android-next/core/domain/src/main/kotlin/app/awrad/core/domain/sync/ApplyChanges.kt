@@ -140,15 +140,18 @@ public object ApplyChanges {
     private fun applied(store: SyncStore, command: OutboxCommand, outcome: Receipt.Applied) {
         val key = command.key
         store.entity(key)?.let { local ->
-            // The sent document is now the server's: a policy's later edits merge against it.
-            val base = if (key.type == EntityType.PRACTICE_POLICY) command.document else local.baseDocument
+            // The sent document is now the server's: a policy's or order's later edits merge against it.
+            val base = if (key.type.mergesConflicts) command.document else local.baseDocument
             store.putEntity(local.copy(knownVersion = outcome.version, baseDocument = base))
         }
         store.removeConflict(key)
         outcome.cascaded.orEmpty().forEach { applyCascaded(store, it) }
     }
 
-    /** A stale put or delete: a conflict opens, except on the practice policy, which merges ([mergePolicy]). */
+    /**
+     * A stale put or delete: a conflict opens, except on the practice policy and the goal order, which merge
+     * ([mergePolicy], [GoalConflicts.mergeOrder]), and on a goal, which takes the server's ([GoalConflicts]).
+     */
     private fun conflict(
         store: SyncStore,
         key: EntityKey,
@@ -156,14 +159,21 @@ public object ApplyChanges {
         newCommandId: () -> AwradId,
     ): SyncNotice? {
         val local = store.entity(key)
-        if (key.type == EntityType.PRACTICE_POLICY && local != null) {
-            return mergePolicy(store, local, current, newCommandId)
+        return when {
+            key.type == EntityType.PRACTICE_POLICY && local != null -> mergePolicy(store, local, current, newCommandId)
+            key.type == EntityType.GOAL -> GoalConflicts.takeTheirs(store, key, current)
+            key.type == EntityType.GOAL_ORDER && local != null -> {
+                GoalConflicts.mergeOrder(store, local, current, newCommandId)
+                null
+            }
+            else -> {
+                local?.let { store.putEntity(it.copy(knownVersion = current.version)) }
+                dropUnsent(store, key)
+                val localOp = if (local != null) SyncOp.PUT else SyncOp.DELETE
+                store.putConflict(SyncConflict(key, localOp, current))
+                null
+            }
         }
-        local?.let { store.putEntity(it.copy(knownVersion = current.version)) }
-        dropUnsent(store, key)
-        val localOp = if (local != null) SyncOp.PUT else SyncOp.DELETE
-        store.putConflict(SyncConflict(key, localOp, current))
-        return null
     }
 
     /**
@@ -242,9 +252,8 @@ public object ApplyChanges {
         return SyncNotice(RejectionCode.HIJRI_CORRECTIONS_REPLACED, key).takeIf { merge?.correctionsReplaced == true }
     }
 
-    /** The base a policy stored from the server keeps: that same document. Other entities have none. */
-    private fun baseOf(key: EntityKey, document: JsonObject): JsonObject? =
-        document.takeIf { key.type == EntityType.PRACTICE_POLICY }
+    /** The base a policy or goal order stored from the server keeps: that same document. Other entities have none. */
+    private fun baseOf(key: EntityKey, document: JsonObject): JsonObject? = document.takeIf { key.type.mergesConflicts }
 
     /** Removes [key] with its unsent commands and conflict, cascading as the server does. */
     public fun remove(store: SyncStore, key: EntityKey) {
@@ -254,7 +263,8 @@ public object ApplyChanges {
         when (key.type) {
             EntityType.CUSTOM_DHIKR -> remove(store, personalKeyOf(key.id))
             EntityType.USER_TAG -> rewriteTag(store, key.id, replacement = null)
-            EntityType.DHIKR_PERSONAL, EntityType.PRACTICE_POLICY -> Unit
+            // A deleted custom dhikr's goals stay: the server's ended documents come in the same page.
+            EntityType.DHIKR_PERSONAL, EntityType.PRACTICE_POLICY, EntityType.GOAL, EntityType.GOAL_ORDER -> Unit
         }
     }
 

@@ -60,6 +60,49 @@ function adjustedStarts(corrections: readonly HijriCorrection[]): number[] {
   return starts;
 }
 
+/** The goal rules look up many days against one set of corrections, so the starts are kept per set. */
+const startsBySet = new WeakMap<readonly HijriCorrection[], number[]>();
+function cachedStarts(corrections: readonly HijriCorrection[]): number[] {
+  let starts = startsBySet.get(corrections);
+  if (starts === undefined) {
+    starts = adjustedStarts(corrections);
+    startsBySet.set(corrections, starts);
+  }
+  return starts;
+}
+
+/** A Hijri month as it falls with the corrections: its first day (a day number) and its length. */
+export interface HijriMonth {
+  year: number;
+  month: number;
+  start: number;
+  length: number;
+}
+
+/** The Hijri month a day number falls in, or `null` outside the table. */
+export function hijriMonthOn(day: number, corrections: readonly HijriCorrection[]): HijriMonth | null {
+  const starts = cachedStarts(corrections);
+  const end = starts[MONTHS.length] ?? 0;
+  if (day < (starts[0] ?? 0) || day >= end) return null;
+  let lo = 0;
+  let hi = MONTHS.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if ((starts[mid] ?? 0) <= day) lo = mid;
+    else hi = mid - 1;
+  }
+  const month = MONTHS[lo];
+  const start = starts[lo];
+  const next = starts[lo + 1];
+  if (month === undefined || start === undefined || next === undefined) return null;
+  return { year: month.year, month: month.month, start, length: next - start };
+}
+
+/** The day number just after the table's last day, with the corrections. */
+export function hijriTableEnd(corrections: readonly HijriCorrection[]): number {
+  return cachedStarts(corrections)[MONTHS.length] ?? 0;
+}
+
 /**
  * The Hijri date of a day (`YYYY-MM-DD`, an effective practice day) and its month's length
  * (hijri_date.json): the month whose adjusted start is on or before it and whose next month's
@@ -70,15 +113,9 @@ export function hijriDate(
   corrections: readonly HijriCorrection[],
 ): { hijri: HijriDate | null; monthLength: number | null } {
   const day = dayNumber(date);
-  const starts = adjustedStarts(corrections);
-  for (const [i, month] of MONTHS.entries()) {
-    const start = starts[i] ?? 0;
-    const next = starts[i + 1] ?? 0;
-    if (day >= start && day < next) {
-      return { hijri: { year: month.year, month: month.month, day: day - start + 1 }, monthLength: next - start };
-    }
-  }
-  return { hijri: null, monthLength: null };
+  const month = hijriMonthOn(day, corrections);
+  if (month === null) return { hijri: null, monthLength: null };
+  return { hijri: { year: month.year, month: month.month, day: day - month.start + 1 }, monthLength: month.length };
 }
 
 function monthLengthsValid(corrections: readonly HijriCorrection[]): boolean {

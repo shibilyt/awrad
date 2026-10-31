@@ -121,6 +121,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -131,7 +132,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -168,6 +173,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -178,7 +184,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -215,6 +225,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -225,7 +236,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -262,6 +277,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -272,7 +288,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -314,6 +334,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": 100,
             "target": 313,
@@ -324,7 +345,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -364,6 +389,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -374,7 +400,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -411,6 +441,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 66,
@@ -419,38 +450,36 @@
           },
           "sessions": [
             {
-              "id": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
+              "target": 33
             },
             {
-              "id": "maghrib",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_maghrib",
+              "kind": "after_prayer",
+              "prayer": "maghrib",
+              "target": 33
             }
           ],
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
             "date": "2026-10-14",
-            "session": "fajr",
+            "session": "after_fajr",
             "count": 33
           },
           {
             "date": "2026-10-14",
-            "session": "maghrib",
+            "session": "after_maghrib",
             "count": 40
           }
         ],
@@ -467,13 +496,13 @@
         "target": null,
         "sessions": [
           {
-            "id": "fajr",
+            "id": "after_fajr",
             "progress": 33,
             "target": 33,
             "status": "met"
           },
           {
-            "id": "maghrib",
+            "id": "after_maghrib",
             "progress": 40,
             "target": 33,
             "status": "met"
@@ -495,6 +524,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 66,
@@ -503,33 +533,31 @@
           },
           "sessions": [
             {
-              "id": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
+              "target": 33
             },
             {
-              "id": "maghrib",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_maghrib",
+              "kind": "after_prayer",
+              "prayer": "maghrib",
+              "target": 33
             }
           ],
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
             "date": "2026-10-14",
-            "session": "fajr",
+            "session": "after_fajr",
             "count": 66
           }
         ],
@@ -546,13 +574,13 @@
         "target": null,
         "sessions": [
           {
-            "id": "fajr",
+            "id": "after_fajr",
             "progress": 66,
             "target": 33,
             "status": "met"
           },
           {
-            "id": "maghrib",
+            "id": "after_maghrib",
             "progress": 0,
             "target": 33,
             "status": "not_met"
@@ -574,6 +602,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 10000,
@@ -584,7 +613,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -631,6 +664,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 10000,
@@ -641,7 +675,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -688,6 +726,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 10000,
@@ -698,7 +737,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -740,6 +783,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 10000,
@@ -750,7 +794,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [],
         "date": "2026-09-30",
@@ -781,6 +829,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -792,7 +841,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -844,6 +897,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -855,7 +909,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -907,6 +965,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -918,7 +977,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -970,6 +1033,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 5000,
@@ -981,7 +1045,11 @@
             "type": "period_total",
             "period": "month"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1028,6 +1096,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -1039,7 +1108,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1081,6 +1154,7 @@
             "duration_days": 15
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -1092,7 +1166,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1129,6 +1207,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": null,
@@ -1139,7 +1218,11 @@
           "requirement": {
             "type": "tracker"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1181,6 +1264,7 @@
               "to": "2026-10-18"
             }
           ],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -1192,7 +1276,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [],
         "date": "2026-10-14",
@@ -1223,6 +1311,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 10000,
@@ -1233,7 +1322,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1270,6 +1363,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -1282,7 +1376,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1319,6 +1417,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -1331,7 +1430,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1368,6 +1471,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 66,
@@ -1376,38 +1480,36 @@
           },
           "sessions": [
             {
-              "id": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
+              "target": 33
             },
             {
-              "id": "maghrib",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_maghrib",
+              "kind": "after_prayer",
+              "prayer": "maghrib",
+              "target": 33
             }
           ],
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
             "date": "2026-10-14",
-            "session": "fajr",
+            "session": "after_fajr",
             "count": 33
           },
           {
             "date": "2026-10-14",
-            "session": "maghrib",
+            "session": "after_maghrib",
             "count": 33
           },
           {
@@ -1429,13 +1531,13 @@
         "target": null,
         "sessions": [
           {
-            "id": "fajr",
+            "id": "after_fajr",
             "progress": 33,
             "target": 33,
             "status": "met"
           },
           {
-            "id": "maghrib",
+            "id": "after_maghrib",
             "progress": 33,
             "target": 33,
             "status": "met"
@@ -1457,6 +1559,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 66,
@@ -1465,43 +1568,41 @@
           },
           "sessions": [
             {
-              "id": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
+              "target": 33
             },
             {
-              "id": "maghrib",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_maghrib",
+              "kind": "after_prayer",
+              "prayer": "maghrib",
+              "target": 33
             }
           ],
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
             "date": "2026-10-14",
-            "session": "fajr",
+            "session": "after_fajr",
             "count": 33
           },
           {
             "date": "2026-10-14",
-            "session": "maghrib",
+            "session": "after_maghrib",
             "count": 33
           },
           {
             "date": "2026-10-14",
-            "session": "isha",
+            "session": "after_isha",
             "count": 100
           }
         ],
@@ -1518,13 +1619,13 @@
         "target": null,
         "sessions": [
           {
-            "id": "fajr",
+            "id": "after_fajr",
             "progress": 33,
             "target": 33,
             "status": "met"
           },
           {
-            "id": "maghrib",
+            "id": "after_maghrib",
             "progress": 33,
             "target": 33,
             "status": "met"
@@ -1546,6 +1647,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": null,
@@ -1556,7 +1658,11 @@
           "requirement": {
             "type": "tracker"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [],
         "date": "2026-10-14",
@@ -1587,6 +1693,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -1598,7 +1705,11 @@
             "type": "period_total",
             "period": "hijri_month"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1650,6 +1761,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -1661,7 +1773,11 @@
             "type": "period_total",
             "period": "hijri_month"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1715,6 +1831,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -1726,7 +1843,11 @@
             "type": "period_total",
             "period": "hijri_month"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1763,6 +1884,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -1774,7 +1896,11 @@
             "type": "period_total",
             "period": "hijri_month"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {

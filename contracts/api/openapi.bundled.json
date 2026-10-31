@@ -1473,7 +1473,7 @@
           "sync"
         ],
         "summary": "Apply a batch of commands",
-        "description": "Applies 1 to 100 commands in order and returns one receipt per command, in the same order. A command's outcome never undoes the others. The account's batches are serialized; every applied command takes the next revision.\n\n**Batch versus command problems.** The batch is refused as a whole (`422 validation_failed`, nothing applied) only when it has 0 or more than 100 commands, or a command's envelope is wrong: `command_id` or `entity_id` not a UUID, an unknown `entity_type` or `op`, `base_version` not an integer in range, `document` missing on a put, present on a delete or not an object, or an unknown member (sync.schema.json `command_envelope`). Everything else is a per-command `rejected` receipt, including a document that doesn't match its schema below: the server checks each document itself, so one bad command never blocks a phone's queue.\n\nReceipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset that isn't a ready asset of the account, `audio_mismatch` when its size or type isn't the asset's, contracts/audio/v1; `entity_id_invalid` when a `practice_policy` entity_id isn't the account's ID; `delete_not_allowed` for a `dhikr_personal` or `practice_policy` delete). Receipts are kept for 90 days.\n\n`Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts the header and ignores it. Responses are `Cache-Control: no-store`.",
+        "description": "Applies 1 to 100 commands in order and returns one receipt per command, in the same order. A command's outcome never undoes the others. The account's batches are serialized; every applied command takes the next revision.\n\n**Batch versus command problems.** The batch is refused as a whole (`422 validation_failed`, nothing applied) only when it has 0 or more than 100 commands, or a command's envelope is wrong: `command_id` or `entity_id` not a UUID, an unknown `entity_type` or `op`, `base_version` not an integer in range, `document` missing on a put, present on a delete or not an object, or an unknown member (sync.schema.json `command_envelope`). Everything else is a per-command `rejected` receipt, including a document that doesn't match its schema below: the server checks each document itself, so one bad command never blocks a phone's queue.\n\nReceipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset that isn't a ready asset of the account, `audio_mismatch` when its size or type isn't the asset's, contracts/audio/v1; `entity_id_invalid` when a `practice_policy` or `goal_order` entity_id isn't the account's ID; `delete_not_allowed` for a `dhikr_personal`, `practice_policy` or `goal_order` delete; `dhikr_not_found` when a goal names neither a built-in dhikr nor a custom dhikr of the account; `goal_limit_reached` past 300 goals that haven't ended or 2,000 in all; `goal_field_immutable` when a put changes a stored goal's `dhikr_id` or `counts`, with an `immutable` error on each). Receipts are kept for 90 days.\n\n**Goals (slice 4).** A goal is one whole document (contracts/goal-model/v1); a put that breaks the goal rules is `rejected` with `document_invalid`. Deleting a custom dhikr ends each of its goals that hasn't ended (`ended.reason: dhikr_deleted`) at the same revision, listed in `cascaded`; a goal put naming an already deleted custom dhikr is applied and stored ended. A `goal_order` keeps only the account's non-deleted goals.\n\n`Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts the header and ignores it. Responses are `Cache-Control: no-store`.",
         "security": [
           {
             "bearerAuth": []
@@ -1633,6 +1633,71 @@
                           "month": 5,
                           "offset_days": -1
                         }
+                      ]
+                    }
+                  },
+                  {
+                    "command_id": "0192f0c0-0000-7000-8000-000000000009",
+                    "entity_type": "goal",
+                    "entity_id": "0192f300-0000-7000-8000-000000000001",
+                    "op": "put",
+                    "base_version": 0,
+                    "document": {
+                      "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+                      "dhikr_snapshot": {
+                        "title": {
+                          "en": "Isthighfar",
+                          "ar": "الاستغفار",
+                          "ml": "ഇസ്തിഗ്ഫാർ"
+                        },
+                        "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                        "kind": "dhikr"
+                      },
+                      "name": null,
+                      "counts": "shared",
+                      "created_on": "2026-10-14",
+                      "versions": [
+                        {
+                          "from": "2026-10-14",
+                          "schedule": {
+                            "kind": "every_day"
+                          },
+                          "active_period": {
+                            "start_date": "2026-10-14",
+                            "end_date": null,
+                            "duration_days": null
+                          },
+                          "count_policy": {
+                            "minimum": 70,
+                            "target": 100,
+                            "maximum": null,
+                            "streak_threshold": "minimum"
+                          },
+                          "sessions": [],
+                          "requirement": {
+                            "type": "per_due_date"
+                          },
+                          "completion": "never",
+                          "make_up": {
+                            "window": "within_3_days",
+                            "fill": "streak"
+                          }
+                        }
+                      ],
+                      "paused": [],
+                      "excused": [],
+                      "ended": null
+                    }
+                  },
+                  {
+                    "command_id": "0192f0c0-0000-7000-8000-00000000000a",
+                    "entity_type": "goal_order",
+                    "entity_id": "0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90",
+                    "op": "put",
+                    "base_version": 0,
+                    "document": {
+                      "goal_ids": [
+                        "0192f300-0000-7000-8000-000000000001"
                       ]
                     }
                   },
@@ -1813,6 +1878,20 @@
                       "cascaded": null
                     },
                     {
+                      "command_id": "0192f0c0-0000-7000-8000-000000000009",
+                      "status": "applied",
+                      "version": 1,
+                      "revision": 15,
+                      "cascaded": null
+                    },
+                    {
+                      "command_id": "0192f0c0-0000-7000-8000-00000000000a",
+                      "status": "applied",
+                      "version": 1,
+                      "revision": 16,
+                      "cascaded": null
+                    },
+                    {
                       "command_id": "0192f0c0-0000-7000-8000-000000000001",
                       "status": "duplicate",
                       "original": {
@@ -1824,7 +1903,7 @@
                       }
                     }
                   ],
-                  "head_revision": 14
+                  "head_revision": 16
                 }
               }
             }
@@ -2049,11 +2128,116 @@
                           }
                         ]
                       }
+                    },
+                    {
+                      "entity_type": "goal",
+                      "entity_id": "0192f300-0000-7000-8000-000000000002",
+                      "state": "active",
+                      "version": 2,
+                      "revision": 15,
+                      "document": {
+                        "dhikr_id": "0192f0d0-0000-7000-8000-000000000002",
+                        "dhikr_snapshot": {
+                          "title": {
+                            "en": null,
+                            "ar": null,
+                            "ml": "ഹസ്ബിയല്ലാഹ്"
+                          },
+                          "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+                          "kind": "dua"
+                        },
+                        "name": "Before sleep",
+                        "counts": "dedicated",
+                        "created_on": "2026-10-01",
+                        "versions": [
+                          {
+                            "from": "2026-10-01",
+                            "schedule": {
+                              "kind": "every_day"
+                            },
+                            "active_period": {
+                              "start_date": "2026-10-01",
+                              "end_date": null,
+                              "duration_days": null
+                            },
+                            "count_policy": {
+                              "minimum": null,
+                              "target": 7,
+                              "maximum": null,
+                              "streak_threshold": "target"
+                            },
+                            "sessions": [],
+                            "requirement": {
+                              "type": "per_due_date"
+                            },
+                            "completion": "never",
+                            "make_up": {
+                              "window": "off",
+                              "fill": "streak"
+                            }
+                          },
+                          {
+                            "from": "2026-10-10",
+                            "schedule": {
+                              "kind": "every_day"
+                            },
+                            "active_period": {
+                              "start_date": "2026-10-01",
+                              "end_date": null,
+                              "duration_days": null
+                            },
+                            "count_policy": {
+                              "minimum": null,
+                              "target": null,
+                              "maximum": null,
+                              "streak_threshold": "target"
+                            },
+                            "sessions": [
+                              {
+                                "id": "between_2100_2330",
+                                "kind": "between",
+                                "from": "21:00",
+                                "to": "23:30",
+                                "target": 7
+                              }
+                            ],
+                            "requirement": {
+                              "type": "per_due_date"
+                            },
+                            "completion": "never",
+                            "make_up": {
+                              "window": "next_day",
+                              "fill": "target"
+                            }
+                          }
+                        ],
+                        "paused": [],
+                        "excused": [
+                          "2026-10-06"
+                        ],
+                        "ended": {
+                          "on": "2026-10-14",
+                          "reason": "user"
+                        }
+                      }
+                    },
+                    {
+                      "entity_type": "goal_order",
+                      "entity_id": "0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90",
+                      "state": "active",
+                      "version": 1,
+                      "revision": 16,
+                      "document": {
+                        "goal_ids": [
+                          "0192f300-0000-7000-8000-000000000001",
+                          "0192f300-0000-7000-8000-000000000002"
+                        ]
+                      }
                     }
                   ],
-                  "next_after": 14,
+                  "next_after": 16,
                   "has_more": false,
-                  "head_revision": 14
+                  "head_revision": 16
                 }
               }
             }
@@ -3146,9 +3330,11 @@
           "custom_dhikr",
           "user_tag",
           "dhikr_personal",
-          "practice_policy"
+          "practice_policy",
+          "goal",
+          "goal_order"
         ],
-        "description": "What a sync entity is (contracts/sync/v1/README.md). practice_policy is one per account, with the account ID as its entity_id."
+        "description": "What a sync entity is (contracts/sync/v1/README.md). practice_policy and goal_order are one per account, with the account ID as their entity_id; a goal has a new UUIDv7."
       },
       "SyncVersion": {
         "type": "integer",
@@ -3430,6 +3616,189 @@
           }
         }
       },
+      "GoalDocument": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dhikr_id",
+          "dhikr_snapshot",
+          "name",
+          "counts",
+          "created_on",
+          "versions",
+          "paused",
+          "excused",
+          "ended"
+        ],
+        "description": "A goal (goal-model.schema.json `goal_document`, slice 4): its dhikr and a snapshot of the dhikr's label, its name, shared or dedicated counts, dated versions of its settings, pauses, excused days and how it ended. The server also checks the goal rules (goal-model/v1 goal_validity) and that the dhikr is built-in or a custom dhikr of the account.",
+        "properties": {
+          "dhikr_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "dhikr_snapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "title",
+              "arabic",
+              "kind"
+            ],
+            "description": "The dhikr's label when the goal was last saved, so History reads after a custom dhikr is gone.",
+            "properties": {
+              "title": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "en",
+                  "ar",
+                  "ml"
+                ],
+                "description": "Every key present, null when not given (STYLE §3); at least one is text.",
+                "properties": {
+                  "en": {
+                    "$ref": "#/components/schemas/SyncOptionalTitleText"
+                  },
+                  "ar": {
+                    "$ref": "#/components/schemas/SyncOptionalTitleText"
+                  },
+                  "ml": {
+                    "$ref": "#/components/schemas/SyncOptionalTitleText"
+                  }
+                }
+              },
+              "arabic": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 5000,
+                "pattern": "\\S"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "quran",
+                  "dhikr",
+                  "dua",
+                  "salawat",
+                  "name_of_allah"
+                ]
+              }
+            }
+          },
+          "name": {
+            "$ref": "#/components/schemas/SyncOptionalTitleText"
+          },
+          "counts": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "dedicated"
+            ],
+            "description": "Which count-log entries fill the goal; set at creation."
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date"
+          },
+          "versions": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "description": "Dated versions, oldest first; the first starts on created_on.",
+            "items": {
+              "description": "A dated version exactly as in contracts/goal-model/v1 `$defs/version`: `from` plus schedule, active_period, count_policy, sessions, requirement, completion and make_up. Not restated here; the goal model schema is the single definition."
+            }
+          },
+          "paused": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "from",
+                "to"
+              ],
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "to": {
+                  "description": "Inclusive; null while still paused.",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "excused": {
+            "type": "array",
+            "maxItems": 1000,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "ended": {
+            "description": "null while the goal runs.",
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "on",
+                  "reason"
+                ],
+                "properties": {
+                  "on": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "completed",
+                      "date",
+                      "structural_edit",
+                      "dhikr_deleted"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "GoalOrderDocument": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "goal_ids"
+        ],
+        "description": "The user's order of My Goals (goal-model.schema.json `goal_order_document`, slice 4). One per account, with the account ID as its entity_id. The server drops IDs that aren't a non-deleted goal of the account.",
+        "properties": {
+          "goal_ids": {
+            "type": "array",
+            "maxItems": 2000,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        }
+      },
       "SyncDocument": {
         "description": "The entity's whole document; which one depends on entity_type.",
         "oneOf": [
@@ -3444,6 +3813,12 @@
           },
           {
             "$ref": "#/components/schemas/PracticePolicyDocument"
+          },
+          {
+            "$ref": "#/components/schemas/GoalDocument"
+          },
+          {
+            "$ref": "#/components/schemas/GoalOrderDocument"
           }
         ]
       },
@@ -3570,9 +3945,10 @@
               "invalid",
               "mismatch",
               "not_found",
-              "range"
+              "range",
+              "immutable"
             ],
-            "description": "`range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its ayah_start (reported on ayah_end)."
+            "description": "`range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its ayah_start (reported on ayah_end). `immutable`: a goal's dhikr_id or counts differs from the stored goal's."
           }
         }
       },
@@ -3586,7 +3962,7 @@
           "version",
           "revision"
         ],
-        "description": "An entity the server changed as a cascade of the receipt's command, at the same revision: a dhikr_personal a user_tag delete removed the tag from (active), or the dhikr_personal of a deleted custom_dhikr (deleted).",
+        "description": "An entity the server changed as a cascade of the receipt's command, at the same revision: a dhikr_personal a user_tag delete removed the tag from (active); or, for a deleted custom_dhikr, its dhikr_personal (deleted) and each of its goals that had not ended, now ended with reason dhikr_deleted (active).",
         "properties": {
           "entity_type": {
             "$ref": "#/components/schemas/SyncEntityType"
@@ -3745,7 +4121,9 @@
               "command_id_reused",
               "audio_not_found",
               "audio_mismatch",
-              "entity_id_invalid"
+              "entity_id_invalid",
+              "goal_limit_reached",
+              "goal_field_immutable"
             ]
           },
           "fields": {

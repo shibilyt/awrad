@@ -82,6 +82,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -94,7 +95,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -150,6 +155,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -162,7 +168,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -213,6 +223,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -225,7 +236,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -281,6 +296,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -293,7 +309,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -349,6 +369,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -361,7 +382,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -417,6 +442,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -429,7 +455,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -480,6 +510,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -492,7 +523,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -545,6 +580,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -557,7 +593,11 @@
             "period": "week",
             "days": 3
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -608,6 +648,7 @@
               "to": "2026-10-16"
             }
           ],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -620,7 +661,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -671,6 +716,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -683,7 +729,11 @@
             "period": "month",
             "days": 20
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -819,6 +869,7 @@
               "to": "2026-10-18"
             }
           ],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -831,7 +882,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [],
         "date": "2026-10-14",
@@ -861,6 +916,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 66,
@@ -869,22 +925,16 @@
           },
           "sessions": [
             {
-              "id": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
+              "target": 33
             },
             {
-              "id": "isha",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_isha",
+              "kind": "after_prayer",
+              "prayer": "isha",
+              "target": 33
             }
           ],
           "requirement": {
@@ -892,22 +942,26 @@
             "period": "week",
             "days": 2
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
             "date": "2026-10-12",
-            "session": "fajr",
+            "session": "after_fajr",
             "count": 33
           },
           {
             "date": "2026-10-12",
-            "session": "isha",
+            "session": "after_isha",
             "count": 33
           },
           {
             "date": "2026-10-13",
-            "session": "fajr",
+            "session": "after_fajr",
             "count": 66
           }
         ],
@@ -951,6 +1005,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -963,7 +1018,11 @@
             "period": "hijri_month",
             "days": 6
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1037,6 +1096,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -1049,7 +1109,11 @@
             "period": "hijri_month",
             "days": 6
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1123,6 +1187,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -1135,7 +1200,11 @@
             "period": "hijri_month",
             "days": 6
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1209,6 +1278,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -1221,7 +1291,11 @@
             "period": "hijri_month",
             "days": 6
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1256,6 +1330,115 @@
         },
         "qualifying_days": 4,
         "required_days": 4
+      }
+    },
+    {
+      "id": "excused_day_lowers_required",
+      "description": "3 days a week with Wednesday excused: the week needs 2.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-05",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-10-07"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 3
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-11",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-05",
+          "to": "2026-10-11"
+        },
+        "qualifying_days": 2,
+        "required_days": 2
+      }
+    },
+    {
+      "id": "every_required_day_excused",
+      "description": "1 day a week with its one missed day excused: the week asks nothing, and isn't due.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-05",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-10-07"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 1
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-11",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_due",
+        "window": {
+          "from": "2026-10-11",
+          "to": "2026-10-11"
+        },
+        "qualifying_days": 0,
+        "required_days": 0
       }
     }
   ]

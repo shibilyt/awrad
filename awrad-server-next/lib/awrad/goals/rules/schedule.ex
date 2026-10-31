@@ -1,6 +1,7 @@
 defmodule Awrad.Goals.Rules.Schedule do
   @moduledoc false
-  # Rule: is due (fixtures/goal_is_due.json).
+  # Rule: is due (fixtures/goal_is_due.json), and the occasion a yearly
+  # schedule's day belongs to.
 
   alias Awrad.Goals.Goal
   alias Awrad.Goals.PausedRange
@@ -11,13 +12,46 @@ defmodule Awrad.Goals.Rules.Schedule do
 
   @weekdays {:monday, :tuesday, :wednesday, :thursday, :friday, :saturday, :sunday}
 
+  @doc "Due: on the schedule inside the active period, not paused and not excused."
   @spec due?(Goal.t(), Date.t(), Corrections.t()) :: boolean()
-  def due?(%Goal{active_period: period} = goal, date, corrections) do
-    Periods.in_active_period?(period, date) and not paused?(goal.paused, date) and
+  def due?(%Goal{} = goal, date, corrections) do
+    in_schedule?(goal, date, corrections) and not paused?(goal, date) and
+      not excused?(goal, date)
+  end
+
+  @doc "On the schedule inside the active period, whether or not paused or excused."
+  @spec in_schedule?(Goal.t(), Date.t(), Corrections.t()) :: boolean()
+  def in_schedule?(%Goal{active_period: period} = goal, date, corrections) do
+    Periods.in_active_period?(period, date) and
       scheduled?(goal.schedule, period.start_date, date, corrections)
   end
 
-  defp paused?(ranges, date), do: Enum.any?(ranges, &in_pause?(&1, date))
+  @spec paused?(Goal.t(), Date.t()) :: boolean()
+  def paused?(%Goal{paused: ranges}, date), do: Enum.any?(ranges, &in_pause?(&1, date))
+
+  @spec excused?(Goal.t(), Date.t()) :: boolean()
+  def excused?(%Goal{excused: excused}, date), do: date in excused
+
+  @doc """
+  The occasion a scheduled day of a yearly goal belongs to: the year, in the
+  schedule's own calendar, its range starts in (a range over the year end
+  belongs to its start year).
+  """
+  @spec occasion(Goal.t(), Date.t(), Corrections.t()) :: integer()
+  def occasion(%Goal{schedule: {:yearly, calendar, ranges}}, date, corrections) do
+    {year, month_day, month_length} = calendar_day(calendar, date, corrections)
+    {from, to} = Enum.find(ranges, &in_range?(&1, month_day, month_length))
+
+    if to < from and month_day <= clamp(to, month_day, month_length), do: year - 1, else: year
+  end
+
+  defp calendar_day(:gregorian, %Date{} = date, _corrections),
+    do: {date.year, {date.month, date.day}, Date.days_in_month(date)}
+
+  defp calendar_day(:hijri, date, corrections) do
+    %HijriDate{} = hijri = Hijri.date(date, corrections)
+    {hijri.year, {hijri.month, hijri.day}, hijri.month_length}
+  end
 
   defp in_pause?(%PausedRange{from: from, to: to}, date),
     do: not Date.before?(date, from) and (is_nil(to) or not Date.after?(date, to))

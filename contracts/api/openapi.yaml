@@ -353,10 +353,10 @@ components:
 
     SyncEntityType:
       type: string
-      enum: [custom_dhikr, user_tag, dhikr_personal, practice_policy]
+      enum: [custom_dhikr, user_tag, dhikr_personal, practice_policy, goal, goal_order]
       description: >-
-        What a sync entity is (contracts/sync/v1/README.md). practice_policy is one per account, with the account ID
-        as its entity_id.
+        What a sync entity is (contracts/sync/v1/README.md). practice_policy and goal_order are one per account, with
+        the account ID as their entity_id; a goal has a new UUIDv7.
     SyncVersion:
       type: integer
       minimum: 0
@@ -534,6 +534,115 @@ components:
                 type: integer
                 minimum: -2
                 maximum: 2
+    GoalDocument:
+      type: object
+      additionalProperties: false
+      required: [dhikr_id, dhikr_snapshot, name, counts, created_on, versions, paused, excused, ended]
+      description: >-
+        A goal (goal-model.schema.json `goal_document`, slice 4): its dhikr and a snapshot of the dhikr's label, its
+        name, shared or dedicated counts, dated versions of its settings, pauses, excused days and how it ended. The
+        server also checks the goal rules (goal-model/v1 goal_validity) and that the dhikr is built-in or a custom
+        dhikr of the account.
+      properties:
+        dhikr_id:
+          $ref: "#/components/schemas/Uuid"
+        dhikr_snapshot:
+          type: object
+          additionalProperties: false
+          required: [title, arabic, kind]
+          description: The dhikr's label when the goal was last saved, so History reads after a custom dhikr is gone.
+          properties:
+            title:
+              type: object
+              additionalProperties: false
+              required: [en, ar, ml]
+              description: Every key present, null when not given (STYLE §3); at least one is text.
+              properties:
+                en:
+                  $ref: "#/components/schemas/SyncOptionalTitleText"
+                ar:
+                  $ref: "#/components/schemas/SyncOptionalTitleText"
+                ml:
+                  $ref: "#/components/schemas/SyncOptionalTitleText"
+            arabic:
+              type: string
+              minLength: 1
+              maxLength: 5000
+              pattern: "\\S"
+            kind:
+              type: string
+              enum: [quran, dhikr, dua, salawat, name_of_allah]
+        name:
+          $ref: "#/components/schemas/SyncOptionalTitleText"
+        counts:
+          type: string
+          enum: [shared, dedicated]
+          description: Which count-log entries fill the goal; set at creation.
+        created_on:
+          type: string
+          format: date
+        versions:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Dated versions, oldest first; the first starts on created_on.
+          items:
+            description: >-
+              A dated version exactly as in contracts/goal-model/v1 `$defs/version`: `from` plus schedule,
+              active_period, count_policy, sessions, requirement, completion and make_up. Not restated here; the goal
+              model schema is the single definition.
+        paused:
+          type: array
+          maxItems: 500
+          items:
+            type: object
+            additionalProperties: false
+            required: [from, to]
+            properties:
+              from:
+                type: string
+                format: date
+              to:
+                description: Inclusive; null while still paused.
+                oneOf:
+                  - type: string
+                    format: date
+                  - type: "null"
+        excused:
+          type: array
+          maxItems: 1000
+          uniqueItems: true
+          items:
+            type: string
+            format: date
+        ended:
+          description: null while the goal runs.
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required: ["on", reason]
+              properties:
+                "on":
+                  type: string
+                  format: date
+                reason:
+                  type: string
+                  enum: [user, completed, date, structural_edit, dhikr_deleted]
+            - type: "null"
+    GoalOrderDocument:
+      type: object
+      additionalProperties: false
+      required: [goal_ids]
+      description: >-
+        The user's order of My Goals (goal-model.schema.json `goal_order_document`, slice 4). One per account, with
+        the account ID as its entity_id. The server drops IDs that aren't a non-deleted goal of the account.
+      properties:
+        goal_ids:
+          type: array
+          maxItems: 2000
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Uuid"
     SyncDocument:
       description: The entity's whole document; which one depends on entity_type.
       oneOf:
@@ -541,6 +650,8 @@ components:
         - $ref: "#/components/schemas/UserTagDocument"
         - $ref: "#/components/schemas/DhikrPersonalDocument"
         - $ref: "#/components/schemas/PracticePolicyDocument"
+        - $ref: "#/components/schemas/GoalDocument"
+        - $ref: "#/components/schemas/GoalOrderDocument"
     SyncCommand:
       description: >-
         One change. `put` creates (base_version 0) or replaces the whole document; `delete` makes a final tombstone.
@@ -603,17 +714,18 @@ components:
           description: JSON Pointer into the command, for example /document/title/en.
         code:
           type: string
-          enum: [required, blank, too_long, too_many, duplicate, not_allowed, invalid, mismatch, not_found, range]
+          enum: [required, blank, too_long, too_many, duplicate, not_allowed, invalid, mismatch, not_found, range, immutable]
           description: >-
             `range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its
-            ayah_start (reported on ayah_end).
+            ayah_start (reported on ayah_end). `immutable`: a goal's dhikr_id or counts differs from the stored goal's.
     SyncCascadedChange:
       type: object
       additionalProperties: false
       required: [entity_type, entity_id, state, version, revision]
       description: >-
         An entity the server changed as a cascade of the receipt's command, at the same revision: a dhikr_personal a
-        user_tag delete removed the tag from (active), or the dhikr_personal of a deleted custom_dhikr (deleted).
+        user_tag delete removed the tag from (active); or, for a deleted custom_dhikr, its dhikr_personal (deleted) and
+        each of its goals that had not ended, now ended with reason dhikr_deleted (active).
       properties:
         entity_type:
           $ref: "#/components/schemas/SyncEntityType"
@@ -713,6 +825,8 @@ components:
             - audio_not_found
             - audio_mismatch
             - entity_id_invalid
+            - goal_limit_reached
+            - goal_field_immutable
         fields:
           type: array
           items:

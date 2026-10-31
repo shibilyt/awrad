@@ -16,7 +16,7 @@ defmodule Awrad.Sync.Batch do
 
   @max_commands 100
   @max_int 9_007_199_254_740_991
-  @entity_types ~w(custom_dhikr user_tag dhikr_personal practice_policy)
+  @entity_types ~w(custom_dhikr user_tag dhikr_personal practice_policy goal goal_order)
   @ops ~w(put delete)
   @members ~w(command_id entity_type entity_id op base_version document)
   @required ~w(command_id entity_type entity_id op base_version)
@@ -68,7 +68,7 @@ defmodule Awrad.Sync.Batch do
       {"command_id", &Awrad.ID.valid?/1, "must be a lowercase UUID"},
       {"entity_id", &Awrad.ID.valid?/1, "must be a lowercase UUID"},
       {"entity_type", &(&1 in @entity_types),
-       "must be custom_dhikr, user_tag, dhikr_personal or practice_policy"},
+       "must be custom_dhikr, user_tag, dhikr_personal, practice_policy, goal or goal_order"},
       {"op", &(&1 in @ops), "must be put or delete"},
       {"base_version", &(is_integer(&1) and &1 >= 0 and &1 <= @max_int),
        "must be an integer from 0 to 2^53 - 1"}

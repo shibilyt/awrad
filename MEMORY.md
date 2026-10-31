@@ -388,3 +388,21 @@ Use this format:
   - Each app has a debug-only component gallery (light/dark, LTR/RTL) as the review surface.
 - Evidence: `contracts/design-system/v1/components.md`, `contracts/design-tokens/v1/README.md`
 - Commit: see git log
+
+### 2026-10-31 — Slice 4a: goal rules
+
+- Area: Cross-project
+- Change:
+  - Goals were designed with the user over 50 decisions (`docs/slices/04-goals-decisions.md`), with an HTML prototype on branch `prototype/goals`.
+  - Counts belong to the dhikr, and each goal is shared or dedicated (root ADR-2026-10-31).
+  - The goal model (`contracts/goal-model/v1`, edited in place) gains:
+    - goal documents with dated versions and a dhikr snapshot;
+    - session kinds with target-only sessions;
+    - numeric streak amounts;
+    - make-up (with pending days that hold the streak) and excused days;
+    - streaks in the goal's rhythm, consistency tags, daily pace, today's ring and list placement.
+  - `contracts/tools/goal-rules.mjs` is a reference implementation the fixtures are checked against.
+  - Sync gains the `goal` and `goal_order` entities, goal limits (300 active, 2,000 total), immutable `dhikr_id` and `counts`, and a custom dhikr delete that ends its goals (replacing "can't delete while goals use it").
+  - The server, Android, iOS and web (a new TypeScript module) implement the rules and goal sync, and run every fixture. Slice 4 is split: 4a rules, 4b screens, 5 counting.
+- Evidence: `docs/slices/04-goals.md`, `contracts/goal-model/v1/README.md`, `contracts/sync/v1/README.md`
+- Commit: see git log

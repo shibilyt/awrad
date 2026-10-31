@@ -23,6 +23,8 @@ export const EMPTY_STATE: SyncState = {
   user_tag: {},
   dhikr_personal: {},
   practice_policy: {},
+  goal: {},
+  goal_order: {},
   headRevision: 0,
 };
 
@@ -35,6 +37,8 @@ function copy(state: SyncState): Draft {
     user_tag: { ...state.user_tag },
     dhikr_personal: { ...state.dhikr_personal },
     practice_policy: { ...state.practice_policy },
+    goal: { ...state.goal },
+    goal_order: { ...state.goal_order },
     headRevision: state.headRevision,
   };
 }

@@ -4,12 +4,16 @@ import app.awrad.core.database.AudioUploadEntity
 import app.awrad.core.database.ConflictEntity
 import app.awrad.core.database.CustomDhikrEntity
 import app.awrad.core.database.DhikrPersonalEntity
+import app.awrad.core.database.GoalEntity
+import app.awrad.core.database.GoalOrderEntity
 import app.awrad.core.database.OutboxEntity
 import app.awrad.core.database.PracticePolicyEntity
 import app.awrad.core.database.SyncDao
 import app.awrad.core.database.SyncMetaEntity
 import app.awrad.core.database.UserTagEntity
 import app.awrad.core.domain.AwradId
+import app.awrad.core.domain.goal.GoalOrder
+import app.awrad.core.domain.goal.GoalOrderJson
 import app.awrad.core.domain.personal.uploadedAssetOf
 import app.awrad.core.domain.practice.PracticePolicy
 import app.awrad.core.domain.practice.PracticePolicyJson
@@ -58,6 +62,8 @@ internal class RoomSyncStore(
         EntityType.USER_TAG -> dao.userTag(key.id.value)?.toLocal()
         EntityType.DHIKR_PERSONAL -> dao.personal(key.id.value)?.toLocal()
         EntityType.PRACTICE_POLICY -> dao.practicePolicy()?.takeIf { it.entityId == key.id.value }?.toLocal()
+        EntityType.GOAL -> dao.goal(key.id.value)?.toLocal()
+        EntityType.GOAL_ORDER -> dao.goalOrder()?.takeIf { it.entityId == key.id.value }?.toLocal()
     }
 
     override fun entities(type: EntityType): List<LocalEntity> = when (type) {
@@ -65,6 +71,8 @@ internal class RoomSyncStore(
         EntityType.USER_TAG -> dao.userTags().map { it.toLocal() }
         EntityType.DHIKR_PERSONAL -> dao.personals().map { it.toLocal() }
         EntityType.PRACTICE_POLICY -> listOfNotNull(dao.practicePolicy()?.toLocal())
+        EntityType.GOAL -> dao.goals().map { it.toLocal() }
+        EntityType.GOAL_ORDER -> listOfNotNull(dao.goalOrder()?.toLocal())
     }.sortedBy { it.key }
 
     override fun putEntity(entity: LocalEntity) {
@@ -112,6 +120,15 @@ internal class RoomSyncStore(
                     ),
                 )
             }
+            EntityType.GOAL -> dao.upsertGoal(GoalEntity(id, entity.knownVersion, entity.document.toString()))
+            EntityType.GOAL_ORDER -> dao.upsertGoalOrder(
+                GoalOrderEntity(
+                    entityId = id,
+                    knownVersion = entity.knownVersion,
+                    document = entity.document.toString(),
+                    baseDocument = entity.baseDocument?.toString(),
+                ),
+            )
         }
     }
 
@@ -128,6 +145,11 @@ internal class RoomSyncStore(
             // A profile always has a policy: the server no longer knowing it only resets its sync state.
             EntityType.PRACTICE_POLICY -> dao.practicePolicy()?.takeIf { it.entityId == id }?.let {
                 dao.upsertPracticePolicy(it.copy(knownVersion = 0, baseDocument = null))
+            }
+            EntityType.GOAL -> dao.deleteGoal(id)
+            // Never deleted either: the order stays, without its sync state.
+            EntityType.GOAL_ORDER -> dao.goalOrder()?.takeIf { it.entityId == id }?.let {
+                dao.upsertGoalOrder(it.copy(knownVersion = 0, baseDocument = null))
             }
         }
     }
@@ -239,6 +261,19 @@ internal fun PracticePolicyEntity.toLocal(): LocalEntity? = entityId?.let { id -
         knownVersion = knownVersion,
         document = parseDocument(document),
         baseDocument = baseDocument?.let(::parseDocument) ?: PracticePolicyJson.encode(PracticePolicy.DEFAULT),
+    )
+}
+
+internal fun GoalEntity.toLocal() =
+    LocalEntity(EntityKey(EntityType.GOAL, AwradId(id)), knownVersion, parseDocument(document))
+
+/** The order as the account's entity, or null in the anonymous profile. Without a known base, an empty order. */
+internal fun GoalOrderEntity.toLocal(): LocalEntity? = entityId?.let { id ->
+    LocalEntity(
+        key = EntityKey(EntityType.GOAL_ORDER, AwradId(id)),
+        knownVersion = knownVersion,
+        document = parseDocument(document),
+        baseDocument = baseDocument?.let(::parseDocument) ?: GoalOrderJson.encode(GoalOrder.EMPTY),
     )
 }
 

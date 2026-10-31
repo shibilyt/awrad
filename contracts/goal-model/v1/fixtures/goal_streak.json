@@ -1,12 +1,13 @@
 {
   "format": "awrad-fixture/1",
   "rule": "goal_streak",
-  "description": "The current streak on a day: consecutive due days meeting the streak threshold (or, for period totals and days per period, consecutive periods meeting the requirement). Non-due days are skipped. Today, or the current period, never breaks the streak while in progress.",
+  "description": "The current streak on a day, in the goal's own rhythm (decision 43): due days (one weekday: \"12 Fridays\"), weeks or months for period totals and days per period, occasions for yearly schedules. A day counts when its status keeps the streak (make_up.json: met, minimum only or made up); a period when it meets its requirement; an occasion when every due day in it is kept. Non-due days (unscheduled, paused, excused, outside the active period) are skipped. Today, the current period or the current occasion never breaks the streak while in progress, and adds only once met. Each day is judged by the version in force that day.",
   "references": [
     "CONTEXT.md#goal-language (Streak)",
     "docs/slices/01-domain-foundation.md rows 14-18",
     "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/util/GoalProgressCalculator.kt:243-276",
-    "awrad-ios/awrad/awrad/Core/AwradCalculators.swift:119-141"
+    "awrad-ios/awrad/awrad/Core/AwradCalculators.swift:119-141",
+    "docs/slices/04-goals-decisions.md decisions 18, 20, 29, 30, 36 and 43"
   ],
   "given_schema": {
     "type": "object",
@@ -19,7 +20,7 @@
     ],
     "properties": {
       "goal": {
-        "$ref": "urn:awrad:goal-model:1#/$defs/goal"
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_input"
       },
       "counts": {
         "type": "array",
@@ -43,12 +44,44 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-      "current"
+      "current",
+      "unit",
+      "weekday",
+      "pending_make_up"
     ],
     "properties": {
       "current": {
         "type": "integer",
         "minimum": 0
+      },
+      "unit": {
+        "enum": [
+          "day",
+          "weekday",
+          "week",
+          "month",
+          "occasion"
+        ],
+        "description": "What `current` counts (README.md, Streak units): days (due days), one weekday (\"12 Fridays\"), weeks, months (Gregorian or Hijri), or occasions (\"3 Ramadans\")."
+      },
+      "weekday": {
+        "oneOf": [
+          {
+            "$ref": "urn:awrad:goal-model:1#/$defs/weekday"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The weekday when unit is weekday; null otherwise."
+      },
+      "pending_make_up": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/date"
+        },
+        "description": "Missed days still inside their make-up window, oldest first (decision 46): they don't break the streak yet. Rows show them (\"🔥 15 · make up Mon\")."
       }
     }
   },
@@ -67,6 +100,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -77,7 +111,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -100,7 +138,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 3
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -117,6 +158,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -127,7 +169,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -155,7 +201,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 3
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -172,6 +221,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -182,7 +232,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -210,7 +264,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 4
+        "current": 4,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -227,6 +284,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -237,7 +295,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -260,7 +322,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 2
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -277,6 +342,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -287,7 +353,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -310,7 +380,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 0
+        "current": 0,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -332,6 +405,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -342,7 +416,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -365,7 +443,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 3
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -382,6 +463,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -392,7 +474,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -415,7 +501,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 2
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -437,6 +526,7 @@
               "to": "2026-10-13"
             }
           ],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -447,7 +537,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -465,7 +559,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 2
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -482,6 +579,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -492,7 +590,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -510,7 +612,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 2
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -527,6 +632,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": 100,
             "target": 313,
@@ -537,7 +643,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -555,7 +665,136 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 2
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "counting_below_threshold_keeps_streak",
+      "description": "Streak counts at the minimum (33); 12 so far today: the streak through yesterday (3) stays visible while counting (decision 50).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 33,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 40
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 33
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 12
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "reaching_threshold_today_adds_one",
+      "description": "The same goal at 33 today: reaching the threshold adds today at once (decision 50).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 33,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 40
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 33
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 33
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 4,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -572,6 +811,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": 100,
             "target": 313,
@@ -582,7 +822,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -600,7 +844,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 0
+        "current": 0,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -617,6 +864,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -627,7 +875,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -645,7 +897,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 1
+        "current": 1,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -662,6 +917,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 66,
@@ -670,43 +926,41 @@
           },
           "sessions": [
             {
-              "id": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
+              "target": 33
             },
             {
-              "id": "isha",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "id": "after_isha",
+              "kind": "after_prayer",
+              "prayer": "isha",
+              "target": 33
             }
           ],
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
             "date": "2026-10-12",
-            "session": "fajr",
+            "session": "after_fajr",
             "count": 33
           },
           {
             "date": "2026-10-13",
-            "session": "fajr",
+            "session": "after_fajr",
             "count": 33
           },
           {
             "date": "2026-10-13",
-            "session": "isha",
+            "session": "after_isha",
             "count": 33
           }
         ],
@@ -714,7 +968,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 1
+        "current": 1,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -731,6 +988,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -742,7 +1000,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -765,7 +1027,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 2
+        "current": 2,
+        "unit": "week",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -782,6 +1047,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -793,7 +1059,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -816,7 +1086,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 3
+        "current": 3,
+        "unit": "week",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -833,6 +1106,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -844,7 +1118,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -857,7 +1135,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 1
+        "current": 1,
+        "unit": "week",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -879,6 +1160,7 @@
               "to": "2026-10-18"
             }
           ],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -890,7 +1172,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -908,7 +1194,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 1
+        "current": 1,
+        "unit": "week",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -925,6 +1214,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -936,7 +1226,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -954,7 +1248,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 2
+        "current": 2,
+        "unit": "week",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -971,6 +1268,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -982,7 +1280,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1000,7 +1302,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 0
+        "current": 0,
+        "unit": "week",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1017,6 +1322,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -1027,7 +1333,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1050,7 +1360,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 0
+        "current": 0,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1067,6 +1380,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -1079,7 +1393,11 @@
             "period": "week",
             "days": 3
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1117,7 +1435,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 1
+        "current": 1,
+        "unit": "week",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1134,6 +1455,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 10000,
@@ -1144,7 +1466,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1162,7 +1488,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 2
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1179,6 +1508,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": null,
@@ -1189,7 +1519,11 @@
           "requirement": {
             "type": "tracker"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1202,7 +1536,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 1
+        "current": 1,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1219,6 +1556,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -1229,7 +1567,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1252,12 +1594,15 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 3
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
       "id": "ramadan_streak_spans_years",
-      "description": "Every day of Ramadan 1446 (29 days) and the first 3 of Ramadan 1447: the year between isn't due.",
+      "description": "Ramadan 1446 was met on all of its 29 days; Ramadan 1447 is in progress (3 days met so far), so it doesn't count yet. An occasion goal's streak counts occasions.",
       "given": {
         "goal": {
           "schedule": {
@@ -1282,6 +1627,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -1292,7 +1638,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1460,12 +1810,15 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 32
+        "current": 1,
+        "unit": "occasion",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
       "id": "ramadan_streak_broken_last_year",
-      "description": "Missing 29 Ramadan 1446 breaks it.",
+      "description": "Missing 29 Ramadan 1446 left that Ramadan unmet; Ramadan 1447 is still in progress.",
       "given": {
         "goal": {
           "schedule": {
@@ -1490,6 +1843,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -1500,7 +1854,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1663,7 +2021,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 3
+        "current": 0,
+        "unit": "occasion",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1685,6 +2046,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -1695,7 +2057,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1733,7 +2099,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 6
+        "current": 6,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1750,6 +2119,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -1761,7 +2131,11 @@
             "type": "period_total",
             "period": "hijri_month"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1784,7 +2158,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 2
+        "current": 2,
+        "unit": "month",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1801,6 +2178,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 10,
@@ -1812,7 +2190,11 @@
             "type": "period_total",
             "period": "hijri_month"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1835,7 +2217,10 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 3
+        "current": 3,
+        "unit": "month",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1865,6 +2250,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 100,
@@ -1877,7 +2263,11 @@
             "period": "hijri_month",
             "days": 6
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -1945,7 +2335,3515 @@
         "week_start": "monday"
       },
       "expect": {
-        "current": 2
+        "current": 2,
+        "unit": "month",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "one_weekday_counts_that_weekday",
+      "description": "Every Friday: the last three Fridays were met, the one before wasn't. Rows read \"🔥 3 Fridays\".",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "friday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-09-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-09-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "weekday",
+        "weekday": "friday",
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "two_weekdays_count_days",
+      "description": "Mondays and Thursdays count due days.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "monday",
+              "thursday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "monthly_total_counts_months",
+      "description": "3,000 a month: August and September met, October in progress.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-08-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 3000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "month"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-08-10",
+            "session": null,
+            "count": 3000
+          },
+          {
+            "date": "2026-09-10",
+            "session": null,
+            "count": 3000
+          },
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 500
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "month",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "make_up_keeps_the_streak",
+      "description": "Monday was missed and made up on Tuesday: the run from 10 October continues.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 5,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "partial_make_up_breaks",
+      "description": "Only 50 of Monday's 100 were made up: the streak restarts on Tuesday.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 150
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "make_up_to_minimum_keeps_streak",
+      "description": "Fill to the streak amount: Monday made up to the minimum of 70 keeps the streak.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 70,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 170
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "pending_make_up_keeps_streak",
+      "description": "Next-day make-up: Monday was missed, but Tuesday (today) can still make it up, so the streak stays at 2 and lists Monday (decision 46).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 50
+          }
+        ],
+        "date": "2026-10-13",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": [
+          "2026-10-12"
+        ]
+      }
+    },
+    {
+      "id": "pending_made_up_adds",
+      "description": "Tuesday makes Monday up: the streak runs through both.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-13",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 4,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "pending_window_closed_breaks",
+      "description": "Wednesday: Monday's window closed unfilled, so it breaks the streak; Tuesday (50) is now pending.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 50
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 1,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": [
+          "2026-10-13"
+        ]
+      }
+    },
+    {
+      "id": "partial_yesterday_pending_with_make_up",
+      "description": "The slice 1 case partial_yesterday_breaks, with next-day make-up on: yesterday's 200 of 313 is pending, so the streak holds at 2.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 313
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 313
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": [
+          "2026-10-13"
+        ]
+      }
+    },
+    {
+      "id": "within_3_days_two_pending",
+      "description": "Within 3 days: Sunday and Monday are both pending; the streak keeps Saturday's 1.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "within_3_days",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-13",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 1,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": [
+          "2026-10-11",
+          "2026-10-12"
+        ]
+      }
+    },
+    {
+      "id": "total_amount_make_up_keeps_streak",
+      "description": "A total at 100 a day with next-day make-up: Monday made up from Tuesday.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": {
+              "amount": 100
+            }
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "excused_day_is_skipped",
+      "description": "Monday was excused: it neither breaks nor adds.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-10-12"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 4,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "excused_day_lowers_days_per_week",
+      "description": "3 days a week: the week of 5 October had 2 qualifying days and 1 excused, so it needed only 2. This week is in progress.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-09-28",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-10-07"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 3
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-09-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-09-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-09-30",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "week",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "tracker_amount_threshold",
+      "description": "A tracker whose streak counts at 100 a day: 100 and 250 keep it, 50 doesn't.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": {
+              "amount": 100
+            }
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "tracker"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 50
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 250
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "total_amount_threshold",
+      "description": "70,000 in total, streak at 100 a day.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": {
+              "amount": 100
+            }
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 99
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "total_daily_pace_on_track",
+      "description": "1,000 by 10 October, streak at the pace: 100 on the 1st (pace 100), 150 on the 2nd (pace 100), 100 on the 3rd (pace ⌈750 ÷ 8⌉ = 94). Today is in progress.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 150
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-04",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "total_daily_pace_behind",
+      "description": "Behind: 50 on the 2nd (pace 100) and 100 on the 3rd (pace ⌈850 ÷ 8⌉ = 107) missed; 200 today meets ⌈750 ÷ 7⌉ = 108.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 50
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-04",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 1,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "each_day_judged_by_its_version",
+      "description": "The target rose from 100 to 200 on 12 October: the 10th and 11th met 100, the 12th and 13th met 200.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 200,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 200
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 4,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "new_version_target_missed",
+      "description": "150 on the 12th misses the new target of 200.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 200,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 150
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 1,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "ended_goal_streak_is_final",
+      "description": "Ended on 12 October: its streak stands at the end.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": {
+            "on": "2026-10-12",
+            "reason": "user"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "ended_goal_partial_last_day_breaks",
+      "description": "After the end, a partial last day is final and breaks it.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": {
+            "on": "2026-10-12",
+            "reason": "user"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 50
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 0,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "ended_today_still_in_progress",
+      "description": "Ended today: today is still in progress until the day is over.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": {
+            "on": "2026-10-14",
+            "reason": "user"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 50
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "occasion_counts_ramadans",
+      "description": "Every day of Ramadan 1446 and 1447 met: \"🔥 2 Ramadans\".",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-02-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2025-03-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-19",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-03-25",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "occasion",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "occasion_in_progress_never_breaks",
+      "description": "A day of Ramadan 1447 was missed, but Ramadan isn't over: it doesn't break the streak yet, and doesn't add.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-02-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2025-03-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-26",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-02-27",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 1,
+        "unit": "occasion",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "occasion_breaks_once_over",
+      "description": "Ramadan 1447 ended with a missed day: the streak is broken.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-02-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2025-03-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-19",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-03-25",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 0,
+        "unit": "occasion",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "occasion_excused_day_kept",
+      "description": "The missed day of Ramadan 1447 was excused, so that Ramadan counts.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-02-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-02-21"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2025-03-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-19",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-03-25",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "occasion",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "occasion_made_up_day_kept",
+      "description": "The missed day was made up the next day.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-02-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2025-03-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-21",
+            "session": null,
+            "count": 0
+          },
+          {
+            "date": "2026-02-22",
+            "session": null,
+            "count": 200
+          },
+          {
+            "date": "2026-02-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-19",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-03-25",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "occasion",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "arafah_today_met_adds",
+      "description": "The Day of Arafah in 1445, 1446 and today (1447), all met.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 9
+                },
+                "end": {
+                  "month": 12,
+                  "day": 9
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2024-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2024-06-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-06-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-05-26",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-05-26",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "occasion",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "arafah_today_in_progress",
+      "description": "Arafah today isn't met yet: the earlier two count.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 9
+                },
+                "end": {
+                  "month": 12,
+                  "day": 9
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2024-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2024-06-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-06-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-05-26",
+            "session": null,
+            "count": 40
+          }
+        ],
+        "date": "2026-05-26",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "occasion",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "gregorian_range_over_year_end_is_one_occasion",
+      "description": "25 December to 5 January is one occasion, though it crosses the year end.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "gregorian",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 25
+                },
+                "end": {
+                  "month": 1,
+                  "day": 5
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-12-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2025-12-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-30",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-31",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-01-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-01-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-01-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-01-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-01-05",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-01-10",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 1,
+        "unit": "occasion",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "gregorian_range_over_year_end_in_progress",
+      "description": "On 2 January the occasion that began on 25 December is still in progress.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "gregorian",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 25
+                },
+                "end": {
+                  "month": 1,
+                  "day": 5
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-12-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2025-12-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-30",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-12-31",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-01-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-01-02",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-01-02",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 0,
+        "unit": "occasion",
+        "weekday": null,
+        "pending_make_up": []
       }
     }
   ]
