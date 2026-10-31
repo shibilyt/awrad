@@ -10,9 +10,15 @@ extension SyncRules {
     /// command is queued (`outbox_enqueue.json`). An anonymous profile saves without queuing.
     ///
     /// - A put stores the document. A delete removes the entity; deleting a custom dhikr removes
-    ///   its personal record, and deleting a tag takes it out of every personal record and never-sent
-    ///   personal command (only the tag delete is queued; the server cascades it).
-    public static func save(_ edit: SyncEdit, queue: Bool, in state: inout some SyncLocalState) {
+    ///   its personal record and ends its goals that haven't ended on `today` (`dhikr_deleted`,
+    ///   without commands: the server ends them itself), and deleting a tag takes it out of every
+    ///   personal record and never-sent personal command (only the tag delete is queued; the
+    ///   server cascades it).
+    /// - Parameter today: the practice day, for ending a deleted custom dhikr's goals; `nil` leaves
+    ///   them as they are (for callers that delete no custom dhikr).
+    public static func save(
+        _ edit: SyncEdit, queue: Bool, today: CalendarDay? = nil, in state: inout some SyncLocalState
+    ) {
         switch edit.op {
         case .put:
             state.setDocument(edit.document, for: edit.key)
@@ -22,6 +28,7 @@ extension SyncRules {
                 let personal = SyncEntityKey(.dhikrPersonal, edit.key.id)
                 state.setDocument(nil, for: personal)
                 if !queue { state.setKnownVersion(nil, for: personal) }
+                if let today { endGoals(ofDhikr: edit.key.id, on: today, in: &state) }
             }
             if edit.key.type == .userTag { removeTagFromPersonalRecords(edit.key.id, in: &state) }
         }
@@ -42,15 +49,18 @@ extension SyncRules {
     ///   (`moveAfterLaterReferences`).
     /// - Otherwise a command is added at the end, chained on the entity's last queued command
     ///   (`base_version` + 1), or on the known version when nothing is queued for it.
-    /// - Deleting a custom dhikr also drops never-sent commands for its personal record.
+    /// - Deleting a custom dhikr also drops never-sent commands for its personal record, and, when
+    ///   its own create was never sent, its goals' never-sent commands (the goals stay, ended).
     /// - Deleting a tag queues only the tag delete, and takes the tag out of every personal record
     ///   and never-sent personal command in place; sent ones stay, since the server drops the tag
     ///   itself and lists the records it changed in the receipt's `cascaded`.
     public static func enqueue(_ edit: SyncEdit, in state: inout some SyncLocalState) {
         let queued = state.commands(for: edit.key)
+        var droppedNeverSentCreate = false
         if var last = queued.last, !last.sent {
             if edit.op == .delete, last.op == .put, last.baseVersion == 0 {
                 state.removeCommand(last.commandID)
+                droppedNeverSentCreate = true
             } else {
                 last.op = edit.op
                 last.document = edit.op == .put ? edit.document : nil
@@ -66,6 +76,10 @@ extension SyncRules {
         }
         if edit.op == .delete, edit.key.type == .customDhikr {
             dropUnsentCommands(for: SyncEntityKey(.dhikrPersonal, edit.key.id), in: &state)
+            // The server never had the dhikr, so its goals' commands could only be rejected.
+            if droppedNeverSentCreate {
+                for goal in goalKeys(ofDhikr: edit.key.id, in: state) { dropUnsentCommands(for: goal, in: &state) }
+            }
         }
         if edit.op == .delete, edit.key.type == .userTag {
             removeTagFromPersonalRecords(edit.key.id, in: &state)
@@ -73,17 +87,18 @@ extension SyncRules {
     }
 
     /// Adopting an anonymous profile ("Add to my account"): every entity is queued as a put on
-    /// version 0, tags first, then custom dhikrs, then personal records, so each command's
-    /// references exist on the server before it arrives.
+    /// version 0, tags first, then custom dhikrs, then personal records, then goals, so each
+    /// command's references exist on the server before it arrives. The practice policy and the
+    /// goal order aren't among them: each is decided after the account's first complete pull.
     public static func queueAll(in state: inout some SyncLocalState) {
-        let order: [SyncEntityType] = [.userTag, .customDhikr, .dhikrPersonal]
+        let order: [SyncEntityType] = [.userTag, .customDhikr, .dhikrPersonal, .goal]
         let keys = state.allKeys().sorted { lhs, rhs in
             let left = order.firstIndex(of: lhs.type) ?? 0
             let right = order.firstIndex(of: rhs.type) ?? 0
             return left == right ? lhs < rhs : left < right
         }
         // The practice policy follows its own first-sign-in rule (`PracticePolicy.afterSignIn`).
-        for key in keys where key.type != .practicePolicy {
+        for key in keys where !key.type.mergesAgainstBase {
             guard let document = state.document(key), state.commands(for: key).isEmpty else { continue }
             state.appendCommand(
                 OutboxCommand(
@@ -123,8 +138,25 @@ extension SyncRules {
         switch key.type {
         case .customDhikr: remove(SyncEntityKey(.dhikrPersonal, key.id), in: &state)
         case .userTag: removeTagFromPersonalRecords(key.id, in: &state)
-        case .dhikrPersonal: break
-        case .practicePolicy: state.setBaseDocument(nil, for: key)
+        case .dhikrPersonal, .goal: break
+        case .practicePolicy, .goalOrder: state.setBaseDocument(nil, for: key)
+        }
+    }
+
+    /// The goals of a custom dhikr on the phone: those whose document, or a queued command's,
+    /// names it.
+    static func goalKeys(ofDhikr dhikr: AwradID, in state: some SyncLocalState) -> [SyncEntityKey] {
+        let stored = state.allKeys().filter { $0.type == .goal && state.document($0)?.goal?.dhikrID == dhikr }
+        let queued = state.outbox.filter { $0.key.type == .goal && $0.document?.goal?.dhikrID == dhikr }.map(\.key)
+        return Array(Set(stored + queued)).sorted()
+    }
+
+    /// Ends every goal of a deleted custom dhikr that hasn't ended, on `today` (decision 37).
+    static func endGoals(ofDhikr dhikr: AwradID, on today: CalendarDay, in state: inout some SyncLocalState) {
+        for key in goalKeys(ofDhikr: dhikr, in: state) {
+            guard var goal = state.document(key)?.goal, goal.timeline.ended == nil else { continue }
+            goal.timeline = goal.timeline.ending(GoalEnding(on: today, reason: .dhikrDeleted))
+            state.setDocument(.goal(goal), for: key)
         }
     }
 

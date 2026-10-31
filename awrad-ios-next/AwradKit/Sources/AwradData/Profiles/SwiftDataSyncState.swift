@@ -46,7 +46,20 @@ struct SwiftDataSyncState: SyncLocalState {
             }
         case .practicePolicy:
             return policyRecord().flatMap { Self.policy($0.document) }.map(SyncDocument.practicePolicy)
+        case .goal:
+            return fetchOne(#Predicate<GoalDocumentRecord> { $0.id == id }).flatMap {
+                Self.syncDocument(.goal, $0.document)
+            }
+        case .goalOrder:
+            return fetchOne(#Predicate<GoalOrderRecord> { $0.id == id }).flatMap {
+                Self.syncDocument(.goalOrder, $0.document)
+            }
         }
+    }
+
+    /// A stored document's wire JSON, read back.
+    static func syncDocument(_ type: SyncEntityType, _ data: Data?) -> SyncDocument? {
+        data.flatMap { try? AwradJSON.decode($0) }.flatMap { try? SyncDocument(type: type, json: $0) }
     }
 
     func setDocument(_ document: SyncDocument?, for key: SyncEntityKey) {
@@ -79,16 +92,47 @@ struct SwiftDataSyncState: SyncLocalState {
             fetchOne(#Predicate<UserTagRecord> { $0.id == id }).map(context.delete)
         case (.dhikrPersonal, _):
             fetchOne(#Predicate<DhikrPersonalRecord> { $0.id == id }).map(context.delete)
-        case (.practicePolicy, .practicePolicy(let policy)):
-            let data = policy.json.encoded()
-            if let record = policyRecord() {
-                record.document = data
-            } else {
-                context.insert(PracticePolicyRecord(document: data))
-            }
         case (.practicePolicy, _):
-            // Back to the default policy, untouched.
+            setPolicyDocument(document?.practicePolicy)
+        case (.goal, _), (.goalOrder, _):
+            setGoalDocument(document, for: key)
+        }
+    }
+
+    /// The policy row, or none (back to the default policy, untouched) for `nil`.
+    private func setPolicyDocument(_ policy: PracticePolicy?) {
+        guard let policy else {
             policyRecord().map(context.delete)
+            return
+        }
+        let data = policy.json.encoded()
+        if let record = policyRecord() {
+            record.document = data
+        } else {
+            context.insert(PracticePolicyRecord(document: data))
+        }
+    }
+
+    /// A goal's or the goal order's row, stored as its wire JSON.
+    private func setGoalDocument(_ document: SyncDocument?, for key: SyncEntityKey) {
+        let id = key.id.value
+        let data = document?.json.encoded()
+        if key.type == .goal {
+            let record = fetchOne(#Predicate<GoalDocumentRecord> { $0.id == id })
+            switch (record, data) {
+            case (let record?, let data?): record.document = data
+            case (nil, let data?): context.insert(GoalDocumentRecord(id: id, document: data))
+            case (let record?, nil): context.delete(record)
+            case (nil, nil): break
+            }
+        } else {
+            let record = fetchOne(#Predicate<GoalOrderRecord> { $0.id == id })
+            switch (record, data) {
+            case (let record?, let data?): record.document = data
+            case (nil, let data?): context.insert(GoalOrderRecord(id: id, document: data))
+            case (let record?, nil): context.delete(record)
+            case (nil, nil): break
+            }
         }
     }
 
@@ -104,13 +148,27 @@ struct SwiftDataSyncState: SyncLocalState {
     }
 
     func baseDocument(_ key: SyncEntityKey) -> SyncDocument? {
-        guard key.type == .practicePolicy else { return nil }
-        return Self.policy(policyRecord()?.baseDocument).map(SyncDocument.practicePolicy)
+        let id = key.id.value
+        switch key.type {
+        case .practicePolicy:
+            return Self.policy(policyRecord()?.baseDocument).map(SyncDocument.practicePolicy)
+        case .goalOrder:
+            return Self.syncDocument(.goalOrder, fetchOne(#Predicate<GoalOrderRecord> { $0.id == id })?.baseDocument)
+        case .customDhikr, .userTag, .dhikrPersonal, .goal:
+            return nil
+        }
     }
 
     func setBaseDocument(_ document: SyncDocument?, for key: SyncEntityKey) {
-        guard key.type == .practicePolicy, let record = policyRecord() else { return }
-        record.baseDocument = document?.json.encoded()
+        let id = key.id.value
+        switch key.type {
+        case .practicePolicy:
+            policyRecord()?.baseDocument = document?.json.encoded()
+        case .goalOrder:
+            fetchOne(#Predicate<GoalOrderRecord> { $0.id == id })?.baseDocument = document?.json.encoded()
+        case .customDhikr, .userTag, .dhikrPersonal, .goal:
+            break
+        }
     }
 
     func personalRecords(tagged tag: AwradID) -> [SyncEntityKey] {
@@ -124,10 +182,14 @@ struct SwiftDataSyncState: SyncLocalState {
         let dhikrs = (try? context.fetch(FetchDescriptor<CustomDhikrRecord>())) ?? []
         let tags = (try? context.fetch(FetchDescriptor<UserTagRecord>())) ?? []
         let personal = (try? context.fetch(FetchDescriptor<DhikrPersonalRecord>())) ?? []
+        let goals = (try? context.fetch(FetchDescriptor<GoalDocumentRecord>())) ?? []
+        let orders = (try? context.fetch(FetchDescriptor<GoalOrderRecord>())) ?? []
         return
             (dhikrs.map { SyncEntityKey(.customDhikr, AwradID($0.id)) }
             + tags.map { SyncEntityKey(.userTag, AwradID($0.id)) }
-            + personal.map { SyncEntityKey(.dhikrPersonal, AwradID($0.id)) }).sorted()
+            + personal.map { SyncEntityKey(.dhikrPersonal, AwradID($0.id)) }
+            + goals.map { SyncEntityKey(.goal, AwradID($0.id)) }
+            + orders.map { SyncEntityKey(.goalOrder, AwradID($0.id)) }).sorted()
     }
 
     // MARK: - Known versions

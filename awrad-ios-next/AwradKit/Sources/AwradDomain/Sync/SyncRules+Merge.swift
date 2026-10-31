@@ -15,8 +15,11 @@ extension SyncRules {
     ///   keeping the account's. It's queued only when that changes it. Records only the anonymous
     ///   profile has are added with their folded tags.
     ///
-    /// Tags are queued first, then custom dhikrs, then personal records (shared ones first), so
-    /// each command's references exist on the server before it arrives.
+    /// - goals keep their IDs and are added; the account profile's goal order (when it has one)
+    ///   gets the anonymous goals it doesn't name appended, in the anonymous profile's order.
+    ///
+    /// Tags are queued first, then custom dhikrs, then personal records (shared ones first), then
+    /// goals and the goal order, so each command's references exist on the server before it arrives.
     public static func merge(_ source: some SyncLocalState, into target: inout some SyncLocalState) {
         let keys = source.allKeys()
         var tagsByName: [String: AwradID] = [:]
@@ -52,5 +55,24 @@ extension SyncRules {
             guard union != (mine ?? []) else { continue }
             save(.put(.dhikrPersonal(DhikrPersonalDocument(tagIDs: union)), id: key.id), queue: true, in: &target)
         }
+        mergeGoals(source, into: &target)
+    }
+
+    private static func mergeGoals(_ source: some SyncLocalState, into target: inout some SyncLocalState) {
+        let keys = source.allKeys()
+        let goals = keys.filter { $0.type == .goal }
+        for key in goals {
+            guard let document = source.document(key) else { continue }
+            save(.put(document, id: key.id), queue: true, in: &target)
+        }
+        guard let orderKey = target.allKeys().first(where: { $0.type == .goalOrder }),
+            let accountOrder = target.document(orderKey)?.goalOrder
+        else { return }
+        let named = keys.first { $0.type == .goalOrder }.flatMap { source.document($0)?.goalOrder?.goalIDs } ?? []
+        let anonymous = named.filter { goals.contains(SyncEntityKey(.goal, $0)) } + goals.map(\.id)
+        var ids = accountOrder.goalIDs
+        for id in anonymous where !ids.contains(id) { ids.append(id) }
+        guard ids != accountOrder.goalIDs else { return }
+        save(.put(.goalOrder(GoalOrder(goalIDs: ids)), id: orderKey.id), queue: true, in: &target)
     }
 }

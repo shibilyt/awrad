@@ -69,6 +69,19 @@ public struct GoalTimeline: Hashable, Sendable {
         self.ended = ended
     }
 
+    /// The same timeline, ended. Ending never makes a timeline invalid.
+    public func ending(_ ending: GoalEnding) -> GoalTimeline {
+        GoalTimeline(copying: self, ended: ending)
+    }
+
+    private init(copying other: GoalTimeline, ended: GoalEnding?) {
+        createdOn = other.createdOn
+        versions = other.versions
+        paused = other.paused
+        excused = other.excused
+        self.ended = ended
+    }
+
     /// The timeline a lone goal stands for: one version from its start date, never ended.
     public init(_ goal: Goal) {
         createdOn = goal.activePeriod.start
