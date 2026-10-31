@@ -216,7 +216,7 @@ actor FakeSyncServer: SyncServer {
                     document: .object(["tag_ids": .array(kept)]))
                 changed.append(other)
             }
-        case .dhikrPersonal, .practicePolicy:
+        case .dhikrPersonal, .practicePolicy, .goal, .goalOrder:
             break
         }
         return changed.sorted().compactMap { changedKey in

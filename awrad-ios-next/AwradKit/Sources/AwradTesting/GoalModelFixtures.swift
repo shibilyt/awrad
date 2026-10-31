@@ -14,6 +14,16 @@ public enum GoalModelRule: String, CaseIterable, Sendable {
     case goalCompletion = "goal_completion"
     case goalStreak = "goal_streak"
     case goalValidity = "goal_validity"
+    case goalVersionOnDay = "goal_version_on_day"
+    case goalVersionAdd = "goal_version_add"
+    case countAttribution = "count_attribution"
+    case makeUp = "make_up"
+    case excusedDays = "excused_days"
+    case consistency
+    case dailyPace = "daily_pace"
+    case todayRing = "today_ring"
+    case goalListPlacement = "goal_list_placement"
+    case goalOrderMerge = "goal_order_merge"
 
     /// `contracts/goal-model/v1/fixtures/<rule>.json` in this repository.
     public func fixtureFile(from filePath: String = #filePath) throws -> URL {
@@ -49,8 +59,8 @@ public enum GoalModelFixtures {
         try GoalModelRule.goalCompletion.cases((GoalOnDay.self, CompletionExpect.self))
     }
 
-    public static func goalStreak() throws -> [FixtureCase<GoalOnDay, StreakExpect>] {
-        try GoalModelRule.goalStreak.cases((GoalOnDay.self, StreakExpect.self))
+    public static func goalStreak() throws -> [FixtureCase<TimelineOnDay, StreakExpect>] {
+        try GoalModelRule.goalStreak.cases((TimelineOnDay.self, StreakExpect.self))
     }
 
     public static func goalValidity() throws -> [FixtureCase<GoalValidityGiven, ValidityExpect>] {
@@ -81,7 +91,7 @@ public struct EffectiveDayGiven: Decodable, Sendable {
     }
 }
 
-/// A goal, its counts and the evaluated day. `counts` and `weekStart` are absent in some rules.
+/// A lone goal, its counts and the evaluated day. `counts` and `weekStart` are absent in some rules.
 public struct GoalOnDay: Decodable, Sendable {
     public let goal: Goal
     public let counts: [CountEntry]
@@ -108,18 +118,24 @@ public struct GoalOnDay: Decodable, Sendable {
     }
 }
 
-/// A `goal_shape` that may be invalid: the only `given` that doesn't require a valid goal. The
-/// shape decodes, and `construction` is what `Goal`'s validating initializer made of it.
+/// A `goal_shape` or `goal_document_shape` that may be invalid: the only `given` that doesn't
+/// require a valid goal. The shape decodes, and `construction` is what the domain's validating
+/// initializers made of it.
 public struct GoalValidityGiven: Decodable, Sendable {
-    public let construction: Result<Goal, GoalValidationError>
+    public let construction: Result<Void, GoalValidationError>
 
     private enum CodingKeys: String, CodingKey {
-        case goal
+        case goal, document
     }
 
     public init(from decoder: any Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
-        construction = try values.decode(GoalShape.self, forKey: .goal).construct()
+        if values.contains(.document) {
+            construction = try values.decode(DocumentShape.self, forKey: .document).timeline.construct().map { _ in }
+        } else {
+            let goal = try values.decode(GoalShape.self, forKey: .goal)
+            construction = try goal.settings.construct().map { _ in }
+        }
     }
 }
 
@@ -196,8 +212,21 @@ public struct CompletionExpect: Decodable, Equatable, Sendable {
 
 public struct StreakExpect: Decodable, Equatable, Sendable {
     public let current: Int
+    public let unit: String
+    public let weekday: String?
+    public let pendingMakeUp: [String]
 
-    public init(current: Int) { self.current = current }
+    public init(_ streak: GoalStreak) {
+        current = streak.current
+        switch streak.unit {
+        case .day: (unit, weekday) = ("day", nil)
+        case .weekday(let day): (unit, weekday) = ("weekday", day.rawValue)
+        case .week: (unit, weekday) = ("week", nil)
+        case .month: (unit, weekday) = ("month", nil)
+        case .occasion: (unit, weekday) = ("occasion", nil)
+        }
+        pendingMakeUp = streak.pendingMakeUp.map(\.description)
+    }
 }
 
 public struct ValidityExpect: Decodable, Equatable, Sendable {
@@ -205,7 +234,7 @@ public struct ValidityExpect: Decodable, Equatable, Sendable {
     /// Error codes, in the order the domain reports them (the contract's is alphabetical).
     public let errors: [String]
 
-    public init(_ construction: Result<Goal, GoalValidationError>) {
+    public init(_ construction: Result<Void, GoalValidationError>) {
         switch construction {
         case .success: self.init(errors: [])
         case .failure(let error): self.init(errors: error.codes.map(\.rawValue))

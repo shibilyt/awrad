@@ -10,6 +10,14 @@ public enum SyncEntityType: String, CaseIterable, Sendable, Hashable, Comparable
     case dhikrPersonal = "dhikr_personal"
     /// The account practice policy (slice 3d): one per account, its ID the account's.
     case practicePolicy = "practice_policy"
+    /// A goal (slice 4): its whole document, dated versions included.
+    case goal
+    /// The account's order of My Goals (slice 4): one per account, its ID the account's.
+    case goalOrder = "goal_order"
+
+    /// Entities that hold one document per account and merge a conflict against a base instead of
+    /// asking: the practice policy and the goal order.
+    public var mergesAgainstBase: Bool { self == .practicePolicy || self == .goalOrder }
 
     /// Wire order (`entity_type` as a string), as the feed and fixtures sort.
     public static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
@@ -72,12 +80,14 @@ public struct DhikrPersonalDocument: Hashable, Sendable {
     }
 }
 
-/// One of the four entity documents.
+/// One of the six entity documents.
 public enum SyncDocument: Hashable, Sendable {
     case customDhikr(CustomDhikrDocument)
     case userTag(UserTagDocument)
     case dhikrPersonal(DhikrPersonalDocument)
     case practicePolicy(PracticePolicy)
+    case goal(GoalDocument)
+    case goalOrder(GoalOrder)
 
     public var entityType: SyncEntityType {
         switch self {
@@ -85,7 +95,19 @@ public enum SyncDocument: Hashable, Sendable {
         case .userTag: .userTag
         case .dhikrPersonal: .dhikrPersonal
         case .practicePolicy: .practicePolicy
+        case .goal: .goal
+        case .goalOrder: .goalOrder
         }
+    }
+
+    public var goal: GoalDocument? {
+        if case .goal(let goal) = self { return goal }
+        return nil
+    }
+
+    public var goalOrder: GoalOrder? {
+        if case .goalOrder(let order) = self { return order }
+        return nil
     }
 
     public var practicePolicy: PracticePolicy? {
@@ -123,10 +145,17 @@ public struct OutboxCommand: Hashable, Sendable {
     }
 
     /// The entities the command's document names, which the server must have first: a personal
-    /// record's tags and its own custom dhikr. Tags, custom dhikrs and deletes name nothing.
+    /// record's tags and its own custom dhikr, a goal's custom dhikr, and a goal order's goals. Tags,
+    /// custom dhikrs, the practice policy and deletes name nothing. (A goal of a built-in dhikr
+    /// names a custom dhikr key that's never queued, so it never moves.)
     public var references: Set<SyncEntityKey> {
-        guard let tagIDs = document?.tagIDs else { return [] }
-        return Set(tagIDs.map { SyncEntityKey(.userTag, $0) }).union([SyncEntityKey(.customDhikr, key.id)])
+        switch document {
+        case .dhikrPersonal(let personal):
+            Set(personal.tagIDs.map { SyncEntityKey(.userTag, $0) }).union([SyncEntityKey(.customDhikr, key.id)])
+        case .goal(let goal): [SyncEntityKey(.customDhikr, goal.dhikrID)]
+        case .goalOrder(let order): Set(order.goalIDs.map { SyncEntityKey(.goal, $0) })
+        case .customDhikr, .userTag, .practicePolicy, nil: []
+        }
     }
 }
 
@@ -233,6 +262,11 @@ public enum RejectionCode: Hashable, Sendable {
     case entityIDInvalid
     /// Not a rejection: a policy merge dropped this phone's Hijri corrections (slice 3d).
     case hijriCorrectionsReplaced
+    /// A goal put that would go past the account's goal limits (slice 4).
+    case goalLimitReached
+    /// Not a rejection: a goal edit lost to another device's, and the phone took the server's goal
+    /// (slice 4, decision 44). The notice offers to do it again.
+    case goalEditNotApplied
     case other(String)
 
     private static let byCode: [String: RejectionCode] = [
@@ -242,6 +276,7 @@ public enum RejectionCode: Hashable, Sendable {
         "entity_not_found": .entityNotFound, "delete_not_allowed": .deleteNotAllowed,
         "command_id_reused": .commandIDReused, "audio_not_found": .audioNotFound, "audio_mismatch": .audioMismatch,
         "entity_id_invalid": .entityIDInvalid, "hijri_corrections_replaced": .hijriCorrectionsReplaced,
+        "goal_limit_reached": .goalLimitReached, "goal_edit_not_applied": .goalEditNotApplied,
     ]
 
     public init(code: String) {
