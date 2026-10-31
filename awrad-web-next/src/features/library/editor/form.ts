@@ -155,6 +155,7 @@ function messageFor(problem: FieldProblem, t: TFunction): string {
     case "mismatch":
     case "not_allowed":
     case "not_found":
+    case "immutable": // only a goal's dhikr_id or counts (slice 4), never a custom dhikr's
       return t("library.editor.errors.invalid");
   }
 }

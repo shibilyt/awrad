@@ -383,7 +383,7 @@ export interface paths {
          *
          *     **Batch versus command problems.** The batch is refused as a whole (`422 validation_failed`, nothing applied) only when it has 0 or more than 100 commands, or a command's envelope is wrong: `command_id` or `entity_id` not a UUID, an unknown `entity_type` or `op`, `base_version` not an integer in range, `document` missing on a put, present on a delete or not an object, or an unknown member (sync.schema.json `command_envelope`). Everything else is a per-command `rejected` receipt, including a document that doesn't match its schema below: the server checks each document itself, so one bad command never blocks a phone's queue.
          *
-         *     Receipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset that isn't a ready asset of the account, `audio_mismatch` when its size or type isn't the asset's, contracts/audio/v1; `entity_id_invalid` when a `practice_policy` or `goal_order` entity_id isn't the account's ID; `delete_not_allowed` for a `dhikr_personal`, `practice_policy` or `goal_order` delete; `dhikr_not_found` when a goal names neither a built-in dhikr nor a custom dhikr of the account; `goal_limit_reached` past 300 goals that haven't ended or 2,000 in all). Receipts are kept for 90 days.
+         *     Receipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset that isn't a ready asset of the account, `audio_mismatch` when its size or type isn't the asset's, contracts/audio/v1; `entity_id_invalid` when a `practice_policy` or `goal_order` entity_id isn't the account's ID; `delete_not_allowed` for a `dhikr_personal`, `practice_policy` or `goal_order` delete; `dhikr_not_found` when a goal names neither a built-in dhikr nor a custom dhikr of the account; `goal_limit_reached` past 300 goals that haven't ended or 2,000 in all; `goal_field_immutable` when a put changes a stored goal's `dhikr_id` or `counts`, with an `immutable` error on each). Receipts are kept for 90 days.
          *
          *     **Goals (slice 4).** A goal is one whole document (contracts/goal-model/v1); a put that breaks the goal rules is `rejected` with `document_invalid`. Deleting a custom dhikr ends each of its goals that hasn't ended (`ended.reason: dhikr_deleted`) at the same revision, listed in `cascaded`; a goal put naming an already deleted custom dhikr is applied and stored ended. A `goal_order` keeps only the account's non-deleted goals.
          *
@@ -800,10 +800,10 @@ export interface components {
             /** @description JSON Pointer into the command, for example /document/title/en. */
             field: string;
             /**
-             * @description `range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its ayah_start (reported on ayah_end).
+             * @description `range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its ayah_start (reported on ayah_end). `immutable`: a goal's dhikr_id or counts differs from the stored goal's.
              * @enum {string}
              */
-            code: "required" | "blank" | "too_long" | "too_many" | "duplicate" | "not_allowed" | "invalid" | "mismatch" | "not_found" | "range";
+            code: "required" | "blank" | "too_long" | "too_many" | "duplicate" | "not_allowed" | "invalid" | "mismatch" | "not_found" | "range" | "immutable";
         };
         /** @description An entity the server changed as a cascade of the receipt's command, at the same revision: a dhikr_personal a user_tag delete removed the tag from (active); or, for a deleted custom_dhikr, its dhikr_personal (deleted) and each of its goals that had not ended, now ended with reason dhikr_deleted (active). */
         SyncCascadedChange: {
@@ -846,7 +846,7 @@ export interface components {
             /** @constant */
             status: "rejected";
             /** @enum {string} */
-            code: "document_invalid" | "document_too_large" | "custom_dhikr_limit_reached" | "tag_limit_reached" | "tag_name_taken" | "tag_not_found" | "dhikr_not_found" | "entity_not_found" | "delete_not_allowed" | "command_id_reused" | "audio_not_found" | "audio_mismatch" | "entity_id_invalid" | "goal_limit_reached";
+            code: "document_invalid" | "document_too_large" | "custom_dhikr_limit_reached" | "tag_limit_reached" | "tag_name_taken" | "tag_not_found" | "dhikr_not_found" | "entity_not_found" | "delete_not_allowed" | "command_id_reused" | "audio_not_found" | "audio_mismatch" | "entity_id_invalid" | "goal_limit_reached" | "goal_field_immutable";
             fields: components["schemas"]["SyncFieldError"][];
             /** @description The server's copy to undo to, or null when it has none. */
             current: components["schemas"]["SyncCurrent"] | null;

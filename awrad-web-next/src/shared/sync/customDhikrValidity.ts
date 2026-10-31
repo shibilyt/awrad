@@ -16,7 +16,8 @@ export type FieldCode =
   | "invalid"
   | "mismatch"
   | "not_found"
-  | "range";
+  | "range"
+  | "immutable";
 
 export interface FieldProblem {
   field: string;
