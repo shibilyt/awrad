@@ -13,6 +13,7 @@ awrad/
 ├── awrad-ios/            Frozen reference: old iOS app
 ├── awrad_server/         Frozen reference: old Phoenix app (API + LiveView)
 ├── docs/                 Plan, cross-project docs, reference material
+├── prototypes/           Clickable HTML prototypes for UX iteration (not shipped; `python3 -m http.server`)
 ├── scripts/              Contract generators/validators, check-toolchain
 ├── mise.toml             Pinned runtimes (Erlang, Elixir, Node, JDK)
 ├── compose.yaml          Local services (Postgres 18)
