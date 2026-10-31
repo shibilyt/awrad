@@ -4,6 +4,9 @@ defmodule Awrad.Sync.GoalRules do
   (`contracts/sync/v1/README.md`, rule 5), and the goals a custom dhikr's
   delete ends (rule 6):
 
+    * a stored goal's `dhikr_id` and `counts` never change
+      (`goal_field_immutable`, `immutable` on each changed member), checked
+      before its dhikr;
     * a goal's `dhikr_id` must be a built-in dhikr or a custom dhikr the
       account has had (`dhikr_not_found`, `not_found` on `/document/dhikr_id`).
       A deleted custom dhikr is accepted, and a goal of it that hasn't ended
@@ -31,6 +34,25 @@ defmodule Awrad.Sync.GoalRules do
   @spec check_goal(Ecto.UUID.t(), map(), Entity.t() | nil, Date.t()) ::
           {:ok, map()} | {:stop, map()}
   def check_goal(user_id, %{"document" => document} = command, entity, today) do
+    case changed_members(document, entity) do
+      [] ->
+        check_dhikr(user_id, command, entity, today)
+
+      changed ->
+        fields =
+          for member <- changed, do: %{"field" => "/document/" <> member, "code" => "immutable"}
+
+        {:stop, Receipt.rejected(command, "goal_field_immutable", fields, entity)}
+    end
+  end
+
+  # A stored goal's dhikr_id and counts never change (sorted by field).
+  defp changed_members(_document, nil), do: []
+
+  defp changed_members(document, %Entity{document: stored}),
+    do: for(member <- ~w(counts dhikr_id), document[member] != stored[member], do: member)
+
+  defp check_dhikr(user_id, %{"document" => document} = command, entity, today) do
     case dhikr_state(user_id, document["dhikr_id"]) do
       nil ->
         fields = [%{"field" => "/document/dhikr_id", "code" => "not_found"}]
