@@ -6,6 +6,9 @@ defmodule Awrad.Sync.SyncReceiptsTest do
   through `Awrad.Sync.apply_batch/2`, and the receipts, head, changes, aliases
   and stored receipts must be the expected ones.
 
+  Cases with `goal` or `goal_order` entities are skipped until slice 4b
+  builds them (`docs/slices/04-goals.md`, platform work).
+
   Not async: every case names the same account ID, and concurrent sandboxed
   inserts of one primary key would only wait on each other.
   """
@@ -20,6 +23,8 @@ defmodule Awrad.Sync.SyncReceiptsTest do
         Fixtures.cases!("sync/v1", "sync_receipts") do
     @given given
     @expect expect
+    if SyncState.goal_entities?(given), do: @tag(skip: "slice 4b: goal entities")
+
     test id do
       %{"state" => state, "batch" => batch} = @given
       %{id: user_id} = user_fixture(%{id: state["account_id"]})

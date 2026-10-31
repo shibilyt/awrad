@@ -4,6 +4,7 @@ defmodule Awrad.Goals.Rules.RequirementStandingTest do
 
   alias Awrad.Fixtures
   alias Awrad.Fixtures.GoalModel
+  alias Awrad.Fixtures.GoalModel.Encode
   alias Awrad.Goals.Rules
 
   for %{"id" => id, "given" => given, "expect" => expect} <-
@@ -20,7 +21,7 @@ defmodule Awrad.Goals.Rules.RequirementStandingTest do
           GoalModel.hijri_corrections(@given)
         )
 
-      assert GoalModel.encode(standing) == @expect
+      assert Encode.result(standing) == @expect
     end
   end
 end

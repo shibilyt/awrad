@@ -3,7 +3,7 @@
 The Awrad JSON API, rebuilt contract-first to replace `awrad_server/` (root ADR-2026-10-14).
 - **Stack:** Phoenix 1.8.15 on Elixir 1.20.4 / OTP 29, Ecto with Postgres 18, Bandit.
 - **API only:** no HTML, assets, LiveView or static files.
-- **Status:** the goal rules and the Hijri calendar (slices 1a and 1b), accounts (slice 2a): registration, email verification and password reset by emailed code, mobile device sessions, browser cookie sessions; and account settings (slice 2b): the session list, password and email changes, account deletion; the built-in dhikr catalog's identity (slice 3a); the change queue for custom dhikrs and tags (slice 3b); private audio for custom dhikrs (slice 3c); and the account practice policy as a change-queue entity (slice 3d). Features arrive in slices (`../docs/rebuild-plan.md`).
+- **Status:** the goal rules and the Hijri calendar (slices 1a, 1b and 4a), accounts (slice 2a): registration, email verification and password reset by emailed code, mobile device sessions, browser cookie sessions; and account settings (slice 2b): the session list, password and email changes, account deletion; the built-in dhikr catalog's identity (slice 3a); the change queue for custom dhikrs and tags (slice 3b); private audio for custom dhikrs (slice 3c); and the account practice policy as a change-queue entity (slice 3d). Features arrive in slices (`../docs/rebuild-plan.md`).
 
 ## Boundaries
 
@@ -47,7 +47,7 @@ flowchart TD
 | `Awrad.Accounts` (sub-boundary) | `Awrad` (`Repo`, `Mailer`, `Gettext`), `Awrad.Audio` (to wake its cleanup on deletion), `Awrad.Secrets` | The `Awrad.Accounts` facade, `DeviceSession`, `EmailInput`, `Grant`, `RateLimiter`, `Scope`, `User` |
 | `Awrad.Idempotency` (sub-boundary) | `Awrad`, `Awrad.Secrets` | The facade and `Record` |
 | `Awrad.Secrets` (sub-boundary) | nothing | Its root module, to its siblings only: `Awrad` doesn't re-export it, so `AwradWeb` can't read secrets |
-| `Awrad.Goals` (sub-boundary of `Awrad`) | `Awrad.Hijri` | `Rules` and the goal-model structs (`Goal`, `ActivePeriod`, `PausedRange`, `CountPolicy`, `Session`, `CountEntry`, `Standing`, `SessionStanding`, `DaysPerPeriodStanding`) |
+| `Awrad.Goals` (sub-boundary of `Awrad`) | `Awrad.Hijri` | `Rules` and the goal-model structs: inputs (`Goal`, `Timeline`, `Version`, `Settings`, `Ended`, `ActivePeriod`, `PausedRange`, `CountPolicy`, `MakeUp`, `Session`, `CountEntry`, `CountLogEntry`) and results (`Standing`, `SessionStanding`, `DaysPerPeriodStanding`, `Streak`, `DayStatus`, `Consistency`, `DailyPace`, `Ring`, `Placement`) |
 | `Awrad.Hijri` (sub-boundary of `Awrad`) | nothing | `Corrections`, `HijriDate` (and the `Awrad.Hijri` facade) |
 | `Awrad.Dhikrs` (sub-boundary of `Awrad`) | nothing | `Catalog`, `Catalog.Entry` |
 | `Awrad.Sync` (sub-boundary of `Awrad`) | `Awrad` (`Repo`, `ID`, `UUIDv7`), `Awrad.Audio`, `Awrad.Dhikrs`, `Awrad.Hijri` (to check a practice policy's corrections) | Only the `Awrad.Sync` facade |
@@ -55,19 +55,21 @@ flowchart TD
 
 Boundary checks these rules at compile time, and `mix validate` fails on any violation (ADR 0001). Test support (`test/support/`) sits outside the production boundaries.
 
-## Goal rules (slice 1)
+## Goal rules (slices 1 and 4a)
 
-`Awrad.Goals` evaluates goals for the web (slice 1 brief, decision 1): pure functions over plain structs, with no Ecto, database or HTTP. The structs mirror `contracts/goal-model/v1/goal-model.schema.json`, using `Date`, `DateTime` and integers.
-- **`Awrad.Goals.Rules`** is the only entry point. It has one function per rule: `effective_practice_day/4`, `due?/3`, `standing/5`, `days_per_period/5`, `completed?/3` and `streak/5`. Every rule that can read Hijri dates (Hijri schedules, Hijri-month periods) takes the account's `Awrad.Hijri.Corrections` as its last argument.
-- **Invalid goals can't be built.** `Awrad.Goals.Goal.new/1` is the only constructor: it returns `{:ok, goal}`, or `{:error, codes}` with the `goal_validity` error codes sorted alphabetically (`session_target_required`, `streak_threshold_value_required`, `target_required`). The rules assume a valid goal. There's no Ecto goal schema yet; when one arrives, its changeset applies the same check with the same codes.
-- **Each rule has one home** under `lib/awrad/goals/rules/`: `EffectiveDay`, `Schedule`, `Requirement`, `DaysPerPeriod`, `Completion` and `Streak`. Two internal helpers, `Periods` (active-period bounds, week, month and Hijri-month windows) and `Counts` (count index, thresholds), are shared. None of these modules is exported.
+`Awrad.Goals` evaluates goals (slice 1 brief, decision 1; slice 4a): pure functions over plain structs, with no Ecto, database or HTTP. The structs mirror `contracts/goal-model/v1/goal-model.schema.json`, using `Date`, `DateTime`, `Time` and integers.
+- **`Awrad.Goals.Rules`** is the only entry point, with one function per rule file (its moduledoc has the table): `effective_practice_day/4`, `due?/3`, `standing/5`, `days_per_period/5`, `completed?/3`, `streak/5`, `version_on/2`, `add_version/3`, `attribute_counts/2`, `day_statuses/5` (make-up), `excuse/5` and `unexcuse/3`, `consistency/5`, `daily_pace/4`, `today_ring/5` and `place/4` (list placement). Every rule that can read Hijri dates takes the account's `Awrad.Hijri.Corrections` as its last argument. `goal_order_merge` is the phones' (the server only conflicts), so `shared_fixtures_test.exs` lists it as client-only.
+- **Goals and timelines.** A `Goal` is what a rule evaluates on one day: one version's `Settings` plus the pauses and excused days. A `Timeline` is the goal document's rule-facing part: dated `Version`s (`from` + `Settings`), pauses, excused days and `Ended`. Rules that look across days take either, judging each day by the version in force that day (`Rules.Versions.resolve/3`, which also caps an ended goal's last day); a single `Goal` stands for a timeline with one version that never ended.
+- **Invalid goals can't be built.** `Goal.new/1` and `Timeline.new/1` are the only constructors: they return `{:ok, value}`, or `{:error, codes}` with the `goal_validity` error codes sorted alphabetically (a timeline has every version's codes plus `structural_change`, `versions_out_of_order` and `first_version_not_created_on`). The rules assume a valid goal. Slice 4b's goal sync entity parses the document into these structs and answers `document_invalid` with the same codes.
+- **Each rule has one home** under `lib/awrad/goals/rules/`: `EffectiveDay`, `Schedule`, `Requirement`, `DaysPerPeriod`, `Completion`, `Streak`, `Versions`, `Attribution`, `DayStatuses` (make-up), `ExcusedDays`, `Consistency`, `Pace` (daily pace and the streak amount), `Ring`, `Placement` and `Validity`. Shared helpers: `Periods` (active-period bounds, week, month and Hijri-month windows), `Counts` (count index, units, targets) and `PeriodWalk` (a period goal's weeks or months, newest first). None of these modules is exported.
 - **Time zones** come from the compiled-in `tz` database, with no runtime updates (ADR 0003).
 - **Schedules** include `{:hijri_month_days, days}` and `{:yearly, :gregorian | :hijri, ranges}` (slice 1b); periods are `:week`, `:month` and `:hijri_month`. Outside the Hijri table, Hijri schedules and Hijri-month periods are never due.
 - **The fixtures are the spec.**
   - `test/support/fixtures.ex` (`Awrad.Fixtures.cases!/2`) loads `contracts/<model>/fixtures/<rule>.json`. It raises when the file is missing, is for another rule, or has no cases.
-  - `test/support/fixtures/goal_model.ex` maps the fixture JSON to the structs and the results back. Rule fixtures' goals go through `Goal.new/1` (an invalid one raises); only `goal_validity` takes the raw `goal_shape`.
+  - `test/support/fixtures/goal_model.ex` maps the fixture JSON to the structs, and `goal_model/encode.ex` maps the results back. Rule fixtures' goals and timelines go through `Goal.new/1` and `Timeline.new/1` (an invalid one raises); only `goal_validity` takes the raw shapes.
   - `test/awrad/goals/rules/*_test.exs` and `test/awrad/hijri/*_test.exs` generate one test per case, named by the case ID. `test/support/fixtures/hijri_calendar.ex` maps the Hijri fixtures, and the goal-model runners pass each case's optional `hijri_corrections`.
   - `test/awrad/shared_fixtures_test.exs` fails when a rule file in `contracts/goal-model/v1/fixtures/` or `contracts/hijri-calendar/v1/fixtures/` has no runner.
+  - Until slice 4b builds the `goal` and `goal_order` sync entities, `sync_receipts_test.exs` skips the cases that name them (`Awrad.Fixtures.Sync.goal_entities?/1`).
 
 ## Hijri calendar (slice 1b)
 
