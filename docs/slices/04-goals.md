@@ -155,7 +155,7 @@ Done 2026-10-31. The rules, conventions and every judgment call the decisions le
 | `count_attribution.json` | Count-log entries plus goals (shared or dedicated, sessions) → each goal's counts per day and session | 9 |
 | `make_up.json` | Counts past a later day's needs fill missed days inside the window, oldest first; each due day's status: met, minimum only, made up, pending, missed, in progress | 26 |
 | `excused_days.json` | Whether a day can be excused or un-excused, with the reason | 30 |
-| `goal_streak.json` (extended) | Units (days, one weekday, weeks, months, occasions), make-up and days pending it, excused days, amount and pace thresholds, versions, ended goals | 62 |
+| `goal_streak.json` (extended) | Units (days, one weekday, weeks, months, occasions), make-up and days pending it, excused days, amount and pace thresholds, versions, ended goals | 64 |
 | `consistency.json` | Kept due days out of the last 30 (or periods out of the last 12) → `devoted`, `steady` or none; no tag before 7 due days (4 periods); whether the row shows 🔥, the tag or nothing | 19 |
 | `daily_pace.json` | What's left ÷ due days left, rounded up, for total goals with an end; recalculated per day | 17 |
 | `today_ring.json` | What a list ring fills toward today, per requirement | 20 |

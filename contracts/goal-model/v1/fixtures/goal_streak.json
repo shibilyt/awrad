@@ -672,6 +672,132 @@
       }
     },
     {
+      "id": "counting_below_threshold_keeps_streak",
+      "description": "Streak counts at the minimum (33); 12 so far today: the streak through yesterday (3) stays visible while counting (decision 50).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 33,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 40
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 33
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 12
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "reaching_threshold_today_adds_one",
+      "description": "The same goal at 33 today: reaching the threshold adds today at once (decision 50).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 33,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 40
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 33
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 33
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 4,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
       "id": "stored_threshold_minimum_breaks_below",
       "description": "99 is below the minimum of 100.",
       "given": {

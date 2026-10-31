@@ -186,3 +186,4 @@ A working log of what the user decided while designing goals (2026-10-30). It be
     - session IDs are derived from the session's kind, so a goal can't have two sessions of one kind;
     - a goal the server ends itself (its custom dhikr deleted) gets the server's UTC date;
     - the daily pace rules: rounded up, fixed for the day, and the default streak amount of a total with an end.
+50. **Counting today never hides the streak** (the user, 2026-10-31). While today is below the streak threshold (e.g. 12 of a 33 minimum), rows and the counter keep showing the streak through yesterday. It goes up by one the moment today reaches the threshold. This was already the rule (`partial_today_does_not_break`); the cases `counting_below_threshold_keeps_streak` and `reaching_threshold_today_adds_one` pin the user's example.

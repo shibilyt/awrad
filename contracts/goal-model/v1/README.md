@@ -10,7 +10,7 @@ The goal rules as executable cases, shared by Android, iOS, the server and the w
 | `fixtures/requirement_standing.json` | Window, progress, target and status, per requirement type (for days per period: that day against the daily target) | 30 |
 | `fixtures/days_per_period.json` | Qualifying days against required days per week, month or Hijri month; excused days lower the number | 18 |
 | `fixtures/goal_completion.json` | Derived completion per completion policy | 11 |
-| `fixtures/goal_streak.json` | The current streak and its unit: days, one weekday, weeks, months or occasions; make-up and days pending it, excused days, amount and pace thresholds, versions, ended goals | 62 |
+| `fixtures/goal_streak.json` | The current streak and its unit: days, one weekday, weeks, months or occasions; make-up and days pending it, excused days, amount and pace thresholds, versions, ended goals | 64 |
 | `fixtures/goal_validity.json` | Which goals and goal documents are invalid, with error codes; platforms reject them at construction, sync and import | 43 |
 | `fixtures/goal_version_on_day.json` | Which dated version a document is judged by on a day, and the `goal` it resolves into | 12 |
 | `fixtures/goal_version_add.json` | Saving a detail edit as a version from today; same-day edits; the 100-version cap | 8 |
