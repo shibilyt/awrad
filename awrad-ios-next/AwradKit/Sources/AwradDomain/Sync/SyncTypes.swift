@@ -264,6 +264,8 @@ public enum RejectionCode: Hashable, Sendable {
     case hijriCorrectionsReplaced
     /// A goal put that would go past the account's goal limits (slice 4).
     case goalLimitReached
+    /// A goal put that changes its `dhikr_id` or `counts`, which never change (slice 4).
+    case goalFieldImmutable
     /// Not a rejection: a goal edit lost to another device's, and the phone took the server's goal
     /// (slice 4, decision 44). The notice offers to do it again.
     case goalEditNotApplied
@@ -276,7 +278,8 @@ public enum RejectionCode: Hashable, Sendable {
         "entity_not_found": .entityNotFound, "delete_not_allowed": .deleteNotAllowed,
         "command_id_reused": .commandIDReused, "audio_not_found": .audioNotFound, "audio_mismatch": .audioMismatch,
         "entity_id_invalid": .entityIDInvalid, "hijri_corrections_replaced": .hijriCorrectionsReplaced,
-        "goal_limit_reached": .goalLimitReached, "goal_edit_not_applied": .goalEditNotApplied,
+        "goal_limit_reached": .goalLimitReached, "goal_field_immutable": .goalFieldImmutable,
+        "goal_edit_not_applied": .goalEditNotApplied,
     ]
 
     public init(code: String) {
