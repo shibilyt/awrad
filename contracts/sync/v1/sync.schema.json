@@ -276,14 +276,14 @@
       "else": { "properties": { "document": { "$ref": "#/$defs/document" } } }
     },
     "field_error": {
-      "description": "One problem with a command. field is a JSON Pointer into the command (for example /document/title/en). `range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its ayah_start (on ayah_end).",
+      "description": "One problem with a command. field is a JSON Pointer into the command (for example /document/title/en). `range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its ayah_start (on ayah_end). `immutable`: a goal's dhikr_id or counts differs from the stored goal's (goal_field_immutable).",
       "type": "object",
       "additionalProperties": false,
       "required": ["field", "code"],
       "properties": {
         "field": { "type": "string" },
         "code": {
-          "enum": ["required", "blank", "too_long", "too_many", "duplicate", "not_allowed", "invalid", "mismatch", "not_found", "range"]
+          "enum": ["required", "blank", "too_long", "too_many", "duplicate", "not_allowed", "invalid", "mismatch", "not_found", "range", "immutable"]
         }
       }
     },
@@ -302,7 +302,8 @@
         "audio_not_found",
         "audio_mismatch",
         "entity_id_invalid",
-        "goal_limit_reached"
+        "goal_limit_reached",
+        "goal_field_immutable"
       ]
     },
     "notice_code": {

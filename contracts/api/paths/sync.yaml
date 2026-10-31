@@ -31,7 +31,8 @@ commands:
       contracts/audio/v1; `entity_id_invalid` when a `practice_policy` or `goal_order` entity_id isn't the account's
       ID; `delete_not_allowed` for a `dhikr_personal`, `practice_policy` or `goal_order` delete; `dhikr_not_found`
       when a goal names neither a built-in dhikr nor a custom dhikr of the account; `goal_limit_reached` past 300
-      goals that haven't ended or 2,000 in all). Receipts are kept for 90 days.
+      goals that haven't ended or 2,000 in all; `goal_field_immutable` when a put changes a stored goal's `dhikr_id`
+      or `counts`, with an `immutable` error on each). Receipts are kept for 90 days.
 
 
       **Goals (slice 4).** A goal is one whole document (contracts/goal-model/v1); a put that breaks the goal rules is

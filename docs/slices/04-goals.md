@@ -151,7 +151,7 @@ Done 2026-10-31. The rules, conventions and every judgment call the decisions le
 | File | Rule | Cases |
 |---|---|---|
 | `goal_version_on_day.json` | Which version applies on a date, and the `goal` it resolves into (an ended goal's end caps it) | 12 |
-| `goal_version_add.json` | A detail edit adds a version from today; same-day edits replace it; the 100-version fold | 8 |
+| `goal_version_add.json` | A detail edit adds a version from today; same-day edits replace it; day sets compare regardless of order; the 100-version fold | 10 |
 | `count_attribution.json` | Count-log entries plus goals (shared or dedicated, sessions) → each goal's counts per day and session | 9 |
 | `make_up.json` | Counts past a later day's needs fill missed days inside the window, oldest first; each due day's status: met, minimum only, made up, pending, missed, in progress | 26 |
 | `excused_days.json` | Whether a day can be excused or un-excused, with the reason | 30 |
@@ -187,10 +187,12 @@ Done 2026-10-31: [`contracts/sync/v1/README.md`](../../contracts/sync/v1/README.
   - the goal rules are `document_invalid`, with a field error per rule;
   - the limits from question 6 (`goal_limit_reached`): 300 goals that haven't ended and 2,000 in all;
   - a `goal_order` keeps only the account's non-deleted goals; repeats are invalid;
+  - a goal's `dhikr_id` and `counts` never change: a put changing either is `goal_field_immutable`;
+  - goal documents are checked structure first, then goal rules, with `{field, code}` errors pinned by `goal_document_validity.json` (all four platforms);
   - deleting a custom dhikr ends its active and paused goals at the same revision, listed in `cascaded`, on the server's UTC date.
-- **Conflicts:** goals use the existing conflict receipt. Phones take the server's goal and show decision 44's notice (`goal_edit_not_applied`) with a retry, instead of 3b's Keep mine / Use theirs.
+- **Conflicts:** goals use the existing conflict receipt. Phones take the server's goal (or remove it when the server's copy is deleted) and show decision 44's notice (`goal_edit_not_applied`) with a retry, instead of 3b's Keep mine / Use theirs.
 - **Phones:** a goal references its custom dhikr, and a goal order its goals, for outbox ordering. Deleting a custom dhikr ends its goals locally without queuing them. Goals count as profile data at the first sign-in.
-- **Fixtures:** cases added to `sync_receipts` (17), `apply_changes` (11), `outbox_enqueue` (5) and `profile_switch` (1). `tools/check-sync-contract.mjs` checks the goal rules, the cascade, the goal order rewrite and goal conflicts.
+- **Fixtures:** `goal_document_validity.json` (31 cases), and cases added to `sync_receipts` (21), `apply_changes` (13), `outbox_enqueue` (5) and `profile_switch` (1). `tools/check-sync-contract.mjs` checks the goal rules, the cascade, the goal order rewrite and goal conflicts.
 - **No new HTTP operations:** everything goes through `/api/v1/sync/commands` and `/api/v1/sync/changes`, whose schemas and examples now include both entities.
 - **ADR:** root `DECISIONS.md` ADR-2026-10-31, "Counts belong to the dhikr; goals choose shared or dedicated".
 

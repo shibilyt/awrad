@@ -10671,6 +10671,587 @@
         ],
         "uploads_queued": []
       }
+    },
+    {
+      "id": "receipt_conflict_goal_deleted_on_server",
+      "description": "A goal edit conflicting with a server copy that is deleted: the phone removes the goal and still shows the notice (the edit wasn't applied).",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "goal",
+              "entity_id": "0192f300-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+                "dhikr_snapshot": {
+                  "title": {
+                    "en": "Isthighfar",
+                    "ar": "الاستغفار",
+                    "ml": "ഇസ്തിഗ്ഫാർ"
+                  },
+                  "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                  "kind": "dhikr"
+                },
+                "name": null,
+                "counts": "shared",
+                "created_on": "2026-10-01",
+                "versions": [
+                  {
+                    "from": "2026-10-01",
+                    "schedule": {
+                      "kind": "every_day"
+                    },
+                    "active_period": {
+                      "start_date": "2026-10-01",
+                      "end_date": null,
+                      "duration_days": null
+                    },
+                    "count_policy": {
+                      "minimum": null,
+                      "target": 100,
+                      "maximum": null,
+                      "streak_threshold": "target"
+                    },
+                    "sessions": [],
+                    "requirement": {
+                      "type": "per_due_date"
+                    },
+                    "completion": "never",
+                    "make_up": {
+                      "window": "off",
+                      "fill": "streak"
+                    }
+                  }
+                ],
+                "paused": [
+                  {
+                    "from": "2026-10-14",
+                    "to": null
+                  }
+                ],
+                "excused": [],
+                "ended": null
+              }
+            },
+            {
+              "entity_type": "goal",
+              "entity_id": "0192f300-0000-7000-8000-000000000002",
+              "known_version": 1,
+              "document": {
+                "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+                "dhikr_snapshot": {
+                  "title": {
+                    "en": "Isthighfar",
+                    "ar": "الاستغفار",
+                    "ml": "ഇസ്തിഗ്ഫാർ"
+                  },
+                  "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                  "kind": "dhikr"
+                },
+                "name": null,
+                "counts": "shared",
+                "created_on": "2026-10-01",
+                "versions": [
+                  {
+                    "from": "2026-10-01",
+                    "schedule": {
+                      "kind": "every_day"
+                    },
+                    "active_period": {
+                      "start_date": "2026-10-01",
+                      "end_date": null,
+                      "duration_days": null
+                    },
+                    "count_policy": {
+                      "minimum": null,
+                      "target": 100,
+                      "maximum": null,
+                      "streak_threshold": "target"
+                    },
+                    "sessions": [],
+                    "requirement": {
+                      "type": "per_due_date"
+                    },
+                    "completion": "never",
+                    "make_up": {
+                      "window": "off",
+                      "fill": "streak"
+                    }
+                  }
+                ],
+                "paused": [],
+                "excused": [],
+                "ended": null
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-00000000064c",
+              "entity_type": "goal",
+              "entity_id": "0192f300-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 2,
+              "document": {
+                "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+                "dhikr_snapshot": {
+                  "title": {
+                    "en": "Isthighfar",
+                    "ar": "الاستغفار",
+                    "ml": "ഇസ്തിഗ്ഫാർ"
+                  },
+                  "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                  "kind": "dhikr"
+                },
+                "name": null,
+                "counts": "shared",
+                "created_on": "2026-10-01",
+                "versions": [
+                  {
+                    "from": "2026-10-01",
+                    "schedule": {
+                      "kind": "every_day"
+                    },
+                    "active_period": {
+                      "start_date": "2026-10-01",
+                      "end_date": null,
+                      "duration_days": null
+                    },
+                    "count_policy": {
+                      "minimum": null,
+                      "target": 100,
+                      "maximum": null,
+                      "streak_threshold": "target"
+                    },
+                    "sessions": [],
+                    "requirement": {
+                      "type": "per_due_date"
+                    },
+                    "completion": "never",
+                    "make_up": {
+                      "window": "off",
+                      "fill": "streak"
+                    }
+                  }
+                ],
+                "paused": [
+                  {
+                    "from": "2026-10-14",
+                    "to": null
+                  }
+                ],
+                "excused": [],
+                "ended": null
+              },
+              "sent": true
+            },
+            {
+              "command_id": "0192f0c0-0000-7000-8000-00000000064d",
+              "entity_type": "goal",
+              "entity_id": "0192f300-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 3,
+              "document": {
+                "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+                "dhikr_snapshot": {
+                  "title": {
+                    "en": "Isthighfar",
+                    "ar": "الاستغفار",
+                    "ml": "ഇസ്തിഗ്ഫാർ"
+                  },
+                  "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                  "kind": "dhikr"
+                },
+                "name": null,
+                "counts": "shared",
+                "created_on": "2026-10-01",
+                "versions": [
+                  {
+                    "from": "2026-10-01",
+                    "schedule": {
+                      "kind": "every_day"
+                    },
+                    "active_period": {
+                      "start_date": "2026-10-01",
+                      "end_date": null,
+                      "duration_days": null
+                    },
+                    "count_policy": {
+                      "minimum": null,
+                      "target": 100,
+                      "maximum": null,
+                      "streak_threshold": "target"
+                    },
+                    "sessions": [],
+                    "requirement": {
+                      "type": "per_due_date"
+                    },
+                    "completion": "never",
+                    "make_up": {
+                      "window": "off",
+                      "fill": "streak"
+                    }
+                  }
+                ],
+                "paused": [
+                  {
+                    "from": "2026-10-14",
+                    "to": null
+                  }
+                ],
+                "excused": [],
+                "ended": {
+                  "on": "2026-10-14",
+                  "reason": "user"
+                }
+              },
+              "sent": false
+            }
+          ],
+          "conflicts": []
+        },
+        "step": {
+          "kind": "receipts",
+          "receipts": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-00000000064c",
+              "status": "conflict",
+              "current": {
+                "version": 3,
+                "state": "deleted",
+                "document": null
+              }
+            }
+          ],
+          "new_command_ids": []
+        },
+        "local_audio_files": []
+      },
+      "expect": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "goal",
+              "entity_id": "0192f300-0000-7000-8000-000000000002",
+              "known_version": 1,
+              "document": {
+                "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+                "dhikr_snapshot": {
+                  "title": {
+                    "en": "Isthighfar",
+                    "ar": "الاستغفار",
+                    "ml": "ഇസ്തിഗ്ഫാർ"
+                  },
+                  "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                  "kind": "dhikr"
+                },
+                "name": null,
+                "counts": "shared",
+                "created_on": "2026-10-01",
+                "versions": [
+                  {
+                    "from": "2026-10-01",
+                    "schedule": {
+                      "kind": "every_day"
+                    },
+                    "active_period": {
+                      "start_date": "2026-10-01",
+                      "end_date": null,
+                      "duration_days": null
+                    },
+                    "count_policy": {
+                      "minimum": null,
+                      "target": 100,
+                      "maximum": null,
+                      "streak_threshold": "target"
+                    },
+                    "sessions": [],
+                    "requirement": {
+                      "type": "per_due_date"
+                    },
+                    "completion": "never",
+                    "make_up": {
+                      "window": "off",
+                      "fill": "streak"
+                    }
+                  }
+                ],
+                "paused": [],
+                "excused": [],
+                "ended": null
+              }
+            }
+          ],
+          "outbox": [],
+          "conflicts": []
+        },
+        "notices": [
+          {
+            "code": "goal_edit_not_applied",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000001"
+          }
+        ],
+        "uploads_queued": []
+      }
+    },
+    {
+      "id": "receipt_rejected_goal_field_immutable_restores",
+      "description": "goal_field_immutable is handled like other rejections: the phone restores the server's copy and shows a notice.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "goal",
+              "entity_id": "0192f300-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+                "dhikr_snapshot": {
+                  "title": {
+                    "en": "Isthighfar",
+                    "ar": "الاستغفار",
+                    "ml": "ഇസ്തിഗ്ഫാർ"
+                  },
+                  "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                  "kind": "dhikr"
+                },
+                "name": null,
+                "counts": "dedicated",
+                "created_on": "2026-10-01",
+                "versions": [
+                  {
+                    "from": "2026-10-01",
+                    "schedule": {
+                      "kind": "every_day"
+                    },
+                    "active_period": {
+                      "start_date": "2026-10-01",
+                      "end_date": null,
+                      "duration_days": null
+                    },
+                    "count_policy": {
+                      "minimum": null,
+                      "target": 100,
+                      "maximum": null,
+                      "streak_threshold": "target"
+                    },
+                    "sessions": [],
+                    "requirement": {
+                      "type": "per_due_date"
+                    },
+                    "completion": "never",
+                    "make_up": {
+                      "window": "off",
+                      "fill": "streak"
+                    }
+                  }
+                ],
+                "paused": [],
+                "excused": [],
+                "ended": null
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-00000000064e",
+              "entity_type": "goal",
+              "entity_id": "0192f300-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 2,
+              "document": {
+                "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+                "dhikr_snapshot": {
+                  "title": {
+                    "en": "Isthighfar",
+                    "ar": "الاستغفار",
+                    "ml": "ഇസ്തിഗ്ഫാർ"
+                  },
+                  "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                  "kind": "dhikr"
+                },
+                "name": null,
+                "counts": "dedicated",
+                "created_on": "2026-10-01",
+                "versions": [
+                  {
+                    "from": "2026-10-01",
+                    "schedule": {
+                      "kind": "every_day"
+                    },
+                    "active_period": {
+                      "start_date": "2026-10-01",
+                      "end_date": null,
+                      "duration_days": null
+                    },
+                    "count_policy": {
+                      "minimum": null,
+                      "target": 100,
+                      "maximum": null,
+                      "streak_threshold": "target"
+                    },
+                    "sessions": [],
+                    "requirement": {
+                      "type": "per_due_date"
+                    },
+                    "completion": "never",
+                    "make_up": {
+                      "window": "off",
+                      "fill": "streak"
+                    }
+                  }
+                ],
+                "paused": [],
+                "excused": [],
+                "ended": null
+              },
+              "sent": true
+            }
+          ],
+          "conflicts": []
+        },
+        "step": {
+          "kind": "receipts",
+          "receipts": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-00000000064e",
+              "status": "rejected",
+              "code": "goal_field_immutable",
+              "fields": [
+                {
+                  "field": "/document/counts",
+                  "code": "immutable"
+                }
+              ],
+              "current": {
+                "version": 2,
+                "state": "active",
+                "document": {
+                  "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+                  "dhikr_snapshot": {
+                    "title": {
+                      "en": "Isthighfar",
+                      "ar": "الاستغفار",
+                      "ml": "ഇസ്തിഗ്ഫാർ"
+                    },
+                    "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                    "kind": "dhikr"
+                  },
+                  "name": null,
+                  "counts": "shared",
+                  "created_on": "2026-10-01",
+                  "versions": [
+                    {
+                      "from": "2026-10-01",
+                      "schedule": {
+                        "kind": "every_day"
+                      },
+                      "active_period": {
+                        "start_date": "2026-10-01",
+                        "end_date": null,
+                        "duration_days": null
+                      },
+                      "count_policy": {
+                        "minimum": null,
+                        "target": 100,
+                        "maximum": null,
+                        "streak_threshold": "target"
+                      },
+                      "sessions": [],
+                      "requirement": {
+                        "type": "per_due_date"
+                      },
+                      "completion": "never",
+                      "make_up": {
+                        "window": "off",
+                        "fill": "streak"
+                      }
+                    }
+                  ],
+                  "paused": [],
+                  "excused": [],
+                  "ended": null
+                }
+              }
+            }
+          ],
+          "new_command_ids": []
+        },
+        "local_audio_files": []
+      },
+      "expect": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "goal",
+              "entity_id": "0192f300-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+                "dhikr_snapshot": {
+                  "title": {
+                    "en": "Isthighfar",
+                    "ar": "الاستغفار",
+                    "ml": "ഇസ്തിഗ്ഫാർ"
+                  },
+                  "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                  "kind": "dhikr"
+                },
+                "name": null,
+                "counts": "shared",
+                "created_on": "2026-10-01",
+                "versions": [
+                  {
+                    "from": "2026-10-01",
+                    "schedule": {
+                      "kind": "every_day"
+                    },
+                    "active_period": {
+                      "start_date": "2026-10-01",
+                      "end_date": null,
+                      "duration_days": null
+                    },
+                    "count_policy": {
+                      "minimum": null,
+                      "target": 100,
+                      "maximum": null,
+                      "streak_threshold": "target"
+                    },
+                    "sessions": [],
+                    "requirement": {
+                      "type": "per_due_date"
+                    },
+                    "completion": "never",
+                    "make_up": {
+                      "window": "off",
+                      "fill": "streak"
+                    }
+                  }
+                ],
+                "paused": [],
+                "excused": [],
+                "ended": null
+              }
+            }
+          ],
+          "outbox": [],
+          "conflicts": []
+        },
+        "notices": [
+          {
+            "code": "goal_field_immutable",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000001"
+          }
+        ],
+        "uploads_queued": []
+      }
     }
   ]
 }

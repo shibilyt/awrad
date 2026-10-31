@@ -79,6 +79,7 @@ Everything else, including a document that breaks its schema, is a `rejected` re
 
      An ID the account never had is `rejected` with `tag_not_found`.
    - A `custom_dhikr` put whose `audio` names an `asset_id` that isn't a ready asset of the account (never uploaded, still pending, cleaned up, or another account's) is `rejected` with `audio_not_found`, with a `not_found` error on `/document/audio/asset_id`. One naming a ready asset but with a different `byte_size` or `content_type` is `rejected` with `audio_mismatch`, with a `mismatch` error on each disagreeing member (`/document/audio/byte_size`, `/document/audio/content_type`). `duration_ms` isn't compared. Clients confirm the upload before they queue the put, and copy the asset's size and type.
+   - **A goal's `dhikr_id` and `counts` never change** after creation. A put on a stored goal that changes either is `rejected` with `goal_field_immutable`, with an `immutable` error on each changed member (`/document/counts`, `/document/dhikr_id`). This is checked before the dhikr below, so a changed `dhikr_id` is never `dhikr_not_found`. Phones handle it like other rejections: they restore the server's copy and show a notice. Another dhikr, or another counts choice, is a new goal.
    - **A goal's dhikr** must be a built-in dhikr or a custom dhikr of the account:
      - an ID that's neither is `rejected` with `dhikr_not_found`, with a `not_found` error on `/document/dhikr_id`;
      - a custom dhikr that has been **deleted** is accepted, so an edit made offline isn't lost. If the document hasn't ended, the server stores it ended, `{"on": <date>, "reason": "dhikr_deleted"}`, as the cascade below would have (decision 37). The receipt is `applied`; phones get the ended document from the changes feed.
@@ -92,7 +93,17 @@ Everything else, including a document that breaks its schema, is a `rejected` re
 
 **The date a server-ended goal gets.** The server doesn't know the user's practice day, so `on` is the UTC date it applies the command on, or the goal's `created_on` or last version's `from` if one is later. It can be a day off the user's own date. The deleting phone has already ended the goals locally with its practice day; the server's documents replace them when they arrive in the feed.
 
-**Goal rules as field errors.** A goal that breaks a goal rule (`goal_validity`) is `rejected` with `document_invalid`. Each error is reported on the version (`N`) and session (`M`) it's in, sorted by field, then code:
+**Goal documents** are checked in two layers, pinned by [`fixtures/goal_document_validity.json`](fixtures/goal_document_validity.json):
+- **structure first** (`$defs/goal_document`):
+  - a missing member is `required`;
+  - an unknown member is `not_allowed`;
+  - a wrong type, an unknown enum value, a session kind that doesn't exist, a non-UUID ID, or an impossible month-day (31 April, on the range's `start` or `end`) is `invalid`;
+  - an empty string is `blank`;
+  - text over its limit is `too_long`;
+  - a list over its limit is `too_many`, except an empty `versions` list, which is `required`;
+  - repeated excused days are `duplicate`;
+  - a snapshot title without any text is `required` on `/dhikr_snapshot/title`;
+- **then, only for a structurally valid document, the goal rules** (`goal_validity`): each error is reported on the version (`N`) and session (`M`) it's in. Errors are sorted by field, then code:
 
 | Goal rule | Field | Code |
 |---|---|---|
@@ -109,7 +120,7 @@ Everything else, including a document that breaks its schema, is a `rejected` re
 | `versions_out_of_order` | `/document/versions/N/from`, on each one not after the one before | `range` |
 | `first_version_not_created_on` | `/document/versions/0/from` | `mismatch` |
 
-Schema errors (a missing member, a wrong type) are reported as for every document.
+A put's errors carry `/document` in front of these pointers.
 
 **Receipts** (`$defs/receipt`), one per command, in order:
 
@@ -205,7 +216,7 @@ The rules are in [`fixtures/apply_changes.json`](fixtures/apply_changes.json).
    | `rejected` | Restores the server's copy, or removes the entity, and tells the user. Except `audio_not_found` and `audio_mismatch` on a custom dhikr put (below) |
 
    **Goal conflicts: the first to reach the server wins** (decision 44). A goal edit, or delete, whose receipt is `conflict`:
-   - takes the server's document and version (a deleted goal comes back), and opens no conflict;
+   - takes the server's document and version (a goal the phone deleted comes back), and opens no conflict. If the server's copy is deleted, the phone removes the goal;
    - drops the goal's later unsent commands;
    - adds the notice `goal_edit_not_applied`, unless the local document already equalled the server's. The phone remembers what the user did (pause, edit, end, delete) and the notice offers to do it again on the server's goal, for example "Isthighfar was updated on another device; your pause wasn't applied. Pause again?". Retrying is an ordinary new edit.
    - The exception is an automatic end (completed, or by date) that lost: it shows no notice, and the phone writes it again when it next finds it. The fixtures have no such case, because a command doesn't record whether it was automatic.
@@ -262,6 +273,7 @@ Each account's data lives in its own **profile**, a separate local database. A r
 |---|---|---|
 | `tag_name_normalization.json` | All four | Display and normalized tag names, limits |
 | `custom_dhikr_validity.json` | All four | Which custom dhikr documents are valid, with `{field, code}` errors |
+| `goal_document_validity.json` | All four | Which goal documents are valid, with `{field, code}` errors |
 | `sync_receipts.json` | Server | A state (account ID, entities, receipts, tag aliases, audio assets, and the UTC date when the server ends a goal) and a batch: receipts, head, changes, aliases, stored receipts |
 | `sync_changes_feed.json` | Server | Entities, `after`, `limit`: the page |
 | `outbox_enqueue.json` | Android, iOS | Known versions, queue and an edit: the queue |
@@ -278,5 +290,7 @@ The goal rules a server applies are in [`../../goal-model/v1/`](../../goal-model
 - in `sync_receipts`, a put naming uploaded audio is applied only for a ready asset with the same size and type, `audio_not_found` exactly when the asset isn't ready, and `audio_mismatch` exactly when it is ready but disagrees;
 - in `apply_changes`, an `audio_not_found` or `audio_mismatch` rejection keeps the local document, fixes its audio, re-queues it ahead of other unsent commands, queues the upload again exactly when the file is on the phone, and adds a notice;
 - in `sync_receipts`, a goal put is `dhikr_not_found` exactly when its dhikr is neither built-in nor a custom dhikr the account has had; an applied goal follows the goal rules and is stored as sent, or ended when it names a deleted custom dhikr; a `document_invalid` goal breaks the schema or the goal rules; an applied goal order keeps only the account's non-deleted goals; a custom dhikr delete ends exactly its goals that hadn't ended, at its revision, on the right date;
-- in `apply_changes`, a goal conflict takes the server's goal with a `goal_edit_not_applied` notice unless nothing was lost, and a goal order conflict merges by `goal_order_merge`;
+- in `sync_receipts`, a put changing a stored goal's `dhikr_id` or `counts` is `goal_field_immutable`, with an `immutable` error on each, and only such a put is;
+- in `apply_changes`, a goal conflict takes the server's goal (or removes it when the server's copy is deleted) with a `goal_edit_not_applied` notice unless nothing was lost, and a goal order conflict merges by `goal_order_merge`;
+- `goal_document_validity` says valid exactly when the document matches `$defs/goal_document` and the goal rules, and lists exactly the goal rules' field errors for a structurally valid document. Structural errors are pinned by the cases only;
 - the names `tag_name_normalization` accepts make valid tag documents.

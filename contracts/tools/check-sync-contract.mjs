@@ -26,15 +26,20 @@
 //      ends every goal of that dhikr that hadn't ended, at its revision, with version + 1, and changes no other goal.
 //      A goal the server ends itself gets ended.on = the state's utc_date, or the goal's created_on or last version's
 //      from if later;
-//   9. in apply_changes.json, a conflict on a goal takes the server's goal and version, opens no conflict, drops the
-//      goal's unsent commands, and adds a goal_edit_not_applied notice unless the local document already equalled the
-//      server's; a conflict on the goal_order merges by goal-model goal_order_merge, like the practice policy.
+//      A put on a stored goal that changes its dhikr_id or counts is `goal_field_immutable` (an `immutable` error on each,
+//      checked before the dhikr), and only such a put is;
+//   9. in apply_changes.json, a conflict on a goal takes the server's goal and version (or removes the goal when the
+//      server's copy is deleted), opens no conflict, drops the goal's unsent commands, and adds a goal_edit_not_applied
+//      notice unless the local document already equalled the server's; a conflict on the goal_order merges by
+//      goal-model goal_order_merge, like the practice policy;
+//  10. goal_document_validity.json says "valid" exactly when the document matches goal-model $defs/goal_document and the
+//      goal rules, and, for a structurally valid document, lists exactly the goal rules' field errors.
 // Usage: node tools/check-sync-contract.mjs
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { newAjv } from "./check-fixtures.mjs";
-import { documentErrors, goalOrderMerge, sameJson as sameCanonical } from "./goal-rules.mjs";
+import { documentErrors, documentFieldErrors, goalOrderMerge, sameJson as sameCanonical } from "./goal-rules.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const read = (path) => JSON.parse(readFileSync(join(root, path), "utf8"));
@@ -261,7 +266,16 @@ for (const c of read("sync/v1/fixtures/sync_receipts.json").cases) {
       const dhikr = command.document.dhikr_id;
       const custom = known.get(`custom_dhikr ${dhikr}`);
       const exists = builtins.has(dhikr) || custom !== undefined;
-      if ((receipt.status === "rejected" && receipt.code === "dhikr_not_found") === exists) {
+      const stored = known.get(`goal ${command.entity_id}`);
+      const changed = stored?.state === "active" && stored.version === command.base_version
+        ? ["counts", "dhikr_id"].filter((member) => command.document[member] !== stored.document[member])
+        : [];
+      const immutable = receipt.status === "rejected" && receipt.code === "goal_field_immutable";
+      if (immutable !== changed.length > 0) problems.push(`${where}: goal_field_immutable exactly when the put changes the stored goal's dhikr_id or counts`);
+      if (immutable && !sameJson(receipt.fields, changed.map((member) => ({ field: `/document/${member}`, code: "immutable" })))) {
+        problems.push(`${where}: goal_field_immutable carries an immutable error on each changed member, sorted`);
+      }
+      if (changed.length === 0 && (receipt.status === "rejected" && receipt.code === "dhikr_not_found") === exists) {
         problems.push(`${where}: dhikr_not_found exactly when ${dhikr} is neither built-in nor a custom dhikr of the account`);
       }
       if (receipt.status === "applied") {
@@ -318,7 +332,9 @@ for (const c of read("sync/v1/fixtures/apply_changes.json").cases) {
     const notices = c.expect.notices.filter(mine).map((n) => n.code);
     if (c.expect.local.conflicts.some(mine)) problems.push(`${where}: a ${command.entity_type} conflict never opens a conflict`);
     if (command.entity_type === "goal") {
-      if (!after || after.known_version !== receipt.current.version || !sameJson(after.document, receipt.current.document)) {
+      if (receipt.current.state === "deleted") {
+        if (after) problems.push(`${where}: a goal deleted on the server is removed`);
+      } else if (!after || after.known_version !== receipt.current.version || !sameJson(after.document, receipt.current.document)) {
         problems.push(`${where}: the goal takes the server's document and version`);
       }
       if (queued.length > 0) problems.push(`${where}: the goal's unsent commands are dropped`);
@@ -338,6 +354,20 @@ for (const c of read("sync/v1/fixtures/apply_changes.json").cases) {
   });
 }
 
+// 10. goal_document_validity
+const goalShape = ajv.getSchema("urn:awrad:goal-model:1#/$defs/goal_document_shape");
+for (const c of read("sync/v1/fixtures/goal_document_validity.json").cases) {
+  checks += 1;
+  const where = `goal_document_validity "${c.id}"`;
+  const shaped = goalShape(c.given.document);
+  const valid = goalSchema(c.given.document) && documentErrors(c.given.document).size === 0;
+  if (valid !== c.expect.valid) problems.push(`${where}: expect.valid is ${c.expect.valid} but the schema and goal rules say ${valid}`);
+  if (shaped && !sameJson(c.expect.errors, documentFieldErrors(c.given.document))) {
+    problems.push(`${where}: a structurally valid document lists exactly its goal-rule errors: ${JSON.stringify(documentFieldErrors(c.given.document))}`);
+  }
+  if (!shaped && c.expect.errors.length === 0) problems.push(`${where}: a structurally invalid document has errors`);
+}
+
 // 4. tag_name_normalization
 for (const c of read("sync/v1/fixtures/tag_name_normalization.json").cases) {
   if (c.expect.accepted) {
@@ -349,4 +379,4 @@ if (problems.length > 0) {
   for (const p of problems) console.error(p);
   process.exit(1);
 }
-console.log(`sync contract: ${checks} checks pass (OpenAPI examples, validity and Qur'an ranges, receipts, cascades and audio checks, phones keeping audio-rejected edits, goals, the goal order and the dhikr cascade, goal conflicts, tag names agree with sync.schema.json)`);
+console.log(`sync contract: ${checks} checks pass (OpenAPI examples, validity and Qur'an ranges, receipts, cascades and audio checks, phones keeping audio-rejected edits, goals, the goal order and the dhikr cascade, immutable goal fields, goal conflicts, goal document validity, tag names agree with sync.schema.json)`);

@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "goal_version_add",
-  "description": "Saving a detail edit (decision 23): the new settings apply from today as a dated version. Same-day edits replace today's version, an edit back to the previous settings removes it, unchanged settings add nothing, and more than 100 versions fold the oldest into the next. Structural edits never come here: they end the goal and start a new one.",
+  "description": "Saving a detail edit (decision 23): the new settings apply from today as a dated version. Same-day edits replace today's version, an edit back to the previous settings removes it, unchanged settings add nothing (weekdays, month days and dates compare as sets; phones write weekdays Monday first and the rest ascending), and more than 100 versions fold the oldest into the next. Structural edits never come here: they end the goal and start a new one.",
   "references": [
     "CONTEXT.md#goal-language (Dated version)",
     "docs/slices/04-goals-decisions.md decision 23",
@@ -842,6 +842,210 @@
             "active_period": {
               "start_date": "2026-10-01",
               "end_date": "2026-12-31",
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "same_days_other_order_adds_nothing",
+      "description": "Weekdays, month days and dates are sets: the same days in another order are no change, so no version is added.",
+      "given": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "weekdays",
+              "weekdays": [
+                "monday",
+                "friday"
+              ]
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ],
+        "today": "2026-10-12",
+        "settings": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "friday",
+              "monday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "weekdays",
+              "weekdays": [
+                "monday",
+                "friday"
+              ]
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "same_month_days_other_order_adds_nothing",
+      "description": "The same for month days.",
+      "given": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "month_days",
+              "days": [
+                1,
+                15
+              ]
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ],
+        "today": "2026-10-12",
+        "settings": {
+          "schedule": {
+            "kind": "month_days",
+            "days": [
+              15,
+              1
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "month_days",
+              "days": [
+                1,
+                15
+              ]
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
               "duration_days": null
             },
             "count_policy": {

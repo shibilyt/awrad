@@ -13,7 +13,7 @@ The goal rules as executable cases, shared by Android, iOS, the server and the w
 | `fixtures/goal_streak.json` | The current streak and its unit: days, one weekday, weeks, months or occasions; make-up and days pending it, excused days, amount and pace thresholds, versions, ended goals | 64 |
 | `fixtures/goal_validity.json` | Which goals and goal documents are invalid, with error codes; platforms reject them at construction, sync and import | 43 |
 | `fixtures/goal_version_on_day.json` | Which dated version a document is judged by on a day, and the `goal` it resolves into | 12 |
-| `fixtures/goal_version_add.json` | Saving a detail edit as a version from today; same-day edits; the 100-version cap | 8 |
+| `fixtures/goal_version_add.json` | Saving a detail edit as a version from today; same-day edits; day sets compare regardless of order; the 100-version cap | 10 |
 | `fixtures/count_attribution.json` | Count-log entries + goals (shared or dedicated, sessions) → each goal's counts per day and session | 9 |
 | `fixtures/make_up.json` | Each due day's status (met, minimum only, made up, pending, missed, in progress) with make-up | 26 |
 | `fixtures/excused_days.json` | Whether a day can be excused or un-excused | 30 |
@@ -64,7 +64,7 @@ A goal syncs as one `goal` entity ([`../../sync/v1/`](../../sync/v1/)) whose doc
 - **A detail edit** (the numbers, sessions, the streak rule, make-up, the end; the name isn't versioned) applies from today as a new version (`goal_version_add.json`):
   - a second edit on the same day replaces today's version;
   - an edit back to the previous settings removes it;
-  - unchanged settings add nothing;
+  - unchanged settings add nothing. Weekdays, month days and dates are sets, compared regardless of order; phones write weekdays Monday first and the rest ascending;
   - a 101st version folds the oldest into the next (the first goes, and the second takes its `from`).
 - **Structural fields** are equal in every version: the schedule kind (and a yearly schedule's calendar), the requirement type (and its period), and the start date. Changing one ends the goal (`structural_edit`) and starts a new one today. A different dhikr is always a new goal.
 - **The version in force on a day** is the one with the latest `from` on or before it; days before the first version use the first (`goal_version_on_day.json`).

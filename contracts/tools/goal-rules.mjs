@@ -691,13 +691,24 @@ export function versionOnDay(given) {
   return { version: versionIndex(given.document, n), goal: resolve(given.document, n) };
 }
 
+/** Weekdays, month days and dates are sets: compared regardless of order (phones write them Monday first, the rest ascending). */
+const WEEK_ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+function canonicalSettings(settings) {
+  const schedule = { ...settings.schedule };
+  if (schedule.weekdays) schedule.weekdays = [...schedule.weekdays].sort((x, y) => WEEK_ORDER.indexOf(x) - WEEK_ORDER.indexOf(y));
+  if (schedule.days) schedule.days = [...schedule.days].sort((x, y) => x - y);
+  if (schedule.dates) schedule.dates = [...schedule.dates].sort();
+  return { ...settings, schedule };
+}
+const sameSettings = (a, b) => sameJson(canonicalSettings(a), canonicalSettings(b));
+
 export function versionAdd(given) {
   const versions = given.versions.map((v) => ({ ...v }));
   const last = versions.at(-1);
-  if (sameJson(settingsOf(last), given.settings)) return { versions };
+  if (sameSettings(settingsOf(last), given.settings)) return { versions };
   if (day(last.from) >= day(given.today)) {
     versions[versions.length - 1] = { from: last.from, ...given.settings };
-    if (versions.length >= 2 && sameJson(settingsOf(versions.at(-2)), given.settings)) versions.pop();
+    if (versions.length >= 2 && sameSettings(settingsOf(versions.at(-2)), given.settings)) versions.pop();
   } else {
     versions.push({ from: given.today, ...given.settings });
   }
@@ -890,3 +901,47 @@ export const RULES = {
 };
 
 export { sameJson, settingsOf };
+
+// ---------------------------------------------------------------- goal rules as field errors (sync/v1 goal_document_validity.json)
+
+/**
+ * A structurally valid goal document's goal-rule errors as {field, code}, pointers into the document
+ * (contracts/sync/v1/README.md, Goal rules as field errors), sorted by field, then code.
+ */
+export function documentFieldErrors(document) {
+  const out = [];
+  const add = (field, code) => {
+    if (!out.some((e) => e.field === field && e.code === code)) out.push({ field, code });
+  };
+  document.versions.forEach((v, n) => {
+    const at = `/versions/${n}`;
+    const errors = goalErrors({ ...settingsOf(v), paused: document.paused, excused: document.excused });
+    const p = v.count_policy;
+    if (errors.has("target_required")) add(`${at}/count_policy/target`, "required");
+    if (errors.has("streak_threshold_value_required") || errors.has("streak_pace_not_allowed")) add(`${at}/count_policy/streak_threshold`, "invalid");
+    if (errors.has("end_date_and_duration")) add(`${at}/active_period/duration_days`, "not_allowed");
+    if (errors.has("make_up_not_allowed")) add(`${at}/make_up/window`, "not_allowed");
+    if (errors.has("sessions_with_minimum_or_cap")) {
+      if (p.minimum !== null) add(`${at}/count_policy/minimum`, "not_allowed");
+      if (p.maximum !== null) add(`${at}/count_policy/maximum`, "not_allowed");
+    }
+    const tracker = v.requirement.type === "tracker";
+    const seen = new Set();
+    v.sessions.forEach((s, m) => {
+      const sat = `${at}/sessions/${m}`;
+      if (!tracker && s.target === null) add(`${sat}/target`, "required");
+      if (s.id !== sessionId(s)) add(`${sat}/id`, "mismatch");
+      if (seen.has(s.id)) add(`${sat}/id`, "duplicate");
+      seen.add(s.id);
+      if (s.kind === "between" && s.from === s.to) add(`${sat}/to`, "range");
+    });
+  });
+  const first = structure(document.versions[0]);
+  document.versions.forEach((v, n) => {
+    if (n > 0 && !sameJson(structure(v), first)) add(`/versions/${n}`, "mismatch");
+    if (n > 0 && day(v.from) <= day(document.versions[n - 1].from)) add(`/versions/${n}/from`, "range");
+  });
+  if (document.versions[0].from !== document.created_on) add("/versions/0/from", "mismatch");
+  const key = (e) => `${e.field}\u0000${e.code}`;
+  return out.sort((x, y) => (key(x) < key(y) ? -1 : key(x) > key(y) ? 1 : 0));
+}
