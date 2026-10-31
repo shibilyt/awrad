@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Awrad goals prototype</title>
+  <link rel="icon" href="data:,">
+  <!-- Serve from the repo root: fonts, icons and the dhikr catalog load from ../../contracts/ -->
+  <link rel="stylesheet" href="prototype.css">
+</head>
+<body>
+  <!-- Shown only when prototype.css didn't load (opened as a file or from the wrong root). prototype.css hides it. -->
+  <div class="serve-hint" style="font:16px/1.5 system-ui,sans-serif;max-width:640px;margin:40px auto;padding:20px 24px;border-radius:16px;background:#FFF4D6;color:#000">
+    <strong>The prototype's styles didn't load.</strong> Serve the repo root and open it over HTTP:<br>
+    <code>python3 -m http.server 5190</code> (from the repo root), then
+    <a href="http://localhost:5190/prototypes/goals/">http://localhost:5190/prototypes/goals/</a>.
+    Opening <code>index.html</code> directly, or from another folder, can't reach <code>../../contracts/</code>.
+  </div>
+  <main class="stage">
+    <div class="device" aria-label="Phone frame, 390 × 844">
+      <div class="phone" id="phone" data-theme="light" dir="ltr" lang="en">
+        <div class="statusbar" aria-hidden="true">
+          <span>9:41</span><span class="island"></span>
+          <span class="sys"><span class="bars"></span><span class="batt"></span></span>
+        </div>
+        <div class="screen-host" id="screen-host"></div>
+        <div id="nav-host"></div>
+        <div id="overlay-host"></div>
+        <div id="toast-host"></div>
+        <div class="homeind" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <aside class="lab" id="lab" aria-label="Lab panel">
+      <h1>Goals lab</h1>
+      <p class="sub">Prototype controls. Nothing here is app UI.</p>
+      <nav class="lab-tabs" role="tablist">
+        <button role="tab" data-labtab="controls" aria-selected="true">Controls</button>
+        <button role="tab" data-labtab="data">Data</button>
+        <button role="tab" data-labtab="variants">Variants</button>
+        <button role="tab" data-labtab="notes">Notes</button>
+      </nav>
+      <section data-labsection="controls" class="on" id="lab-controls"></section>
+      <section data-labsection="data" id="lab-data"></section>
+      <section data-labsection="variants" id="lab-variants"></section>
+      <section data-labsection="notes" id="lab-notes"></section>
+    </aside>
+  </main>
+  <script src="prototype.js"></script>
+</body>
+</html>
