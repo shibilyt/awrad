@@ -89,7 +89,7 @@ export function goalErrors(goal: Goal): GoalError[] {
 }
 
 /** The fields every version must agree on: changing one ends the goal and starts a new one. */
-function structureOf(settings: GoalSettings) {
+export function structureOf(settings: GoalSettings): Record<string, string | null> {
   const { schedule, requirement } = settings;
   return {
     schedule: schedule.kind,

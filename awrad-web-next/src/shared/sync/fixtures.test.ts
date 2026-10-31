@@ -1,12 +1,13 @@
 import { describe, expect, test } from "vitest";
+import { goalDocumentProblems } from "@/shared/goals";
 import { customDhikrProblems } from "./customDhikrValidity";
 import { normalizeTagName } from "./tagName";
 
 /**
  * Runs contracts/sync/v1/fixtures/ (contracts/FIXTURES.md) against the real rules, naming failures
- * by case id. The web runs the two rules every platform shares; the others belong to the server
- * or to phones (contracts/sync/v1/README.md "Fixtures"). Every file must be one or the other, so a
- * new rule can't be skipped silently.
+ * by case id. The web runs the three rules every platform shares (goal documents' from
+ * src/shared/goals); the others belong to the server or to phones (contracts/sync/v1/README.md
+ * "Fixtures"). Every file must be one or the other, so a new rule can't be skipped silently.
  */
 interface Fixture {
   format: string;
@@ -26,6 +27,10 @@ const ADAPTERS: Record<string, (given: Record<string, unknown>) => unknown> = {
   },
   custom_dhikr_validity: (given) => {
     const errors = customDhikrProblems(given["document"]);
+    return { valid: errors.length === 0, errors };
+  },
+  goal_document_validity: (given) => {
+    const errors = goalDocumentProblems(given["document"]);
     return { valid: errors.length === 0, errors };
   },
 };

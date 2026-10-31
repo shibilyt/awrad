@@ -1,6 +1,6 @@
-import { day } from "./days";
+import { compareText, day } from "./days";
 import { lastDay } from "./schedule";
-import type { Ended, Goal, GoalInput, GoalSettings, GoalTimeline, Version } from "./types";
+import type { Ended, Goal, GoalInput, GoalSettings, GoalTimeline, Schedule, Version, Weekday } from "./types";
 
 /**
  * Dated versions (README "Dated versions", decision 23): editing never rewrites the past. Each
@@ -72,23 +72,51 @@ export function sameJson(a: unknown, b: unknown): boolean {
   return aKeys.every((key) => key in bRecord && sameJson(aRecord[key], bRecord[key]));
 }
 
+const WEEK_ORDER: readonly Weekday[] = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
+/** A schedule with its weekdays, month days and dates in one order: they're sets. */
+function canonicalSchedule(schedule: Schedule): Schedule {
+  switch (schedule.kind) {
+    case "weekdays":
+      return {
+        ...schedule,
+        weekdays: [...schedule.weekdays].sort((a, b) => WEEK_ORDER.indexOf(a) - WEEK_ORDER.indexOf(b)),
+      };
+    case "month_days":
+    case "hijri_month_days":
+      return { ...schedule, days: [...schedule.days].sort((a, b) => a - b) };
+    case "specific_dates":
+      return { ...schedule, dates: [...schedule.dates].sort(compareText) };
+    case "every_day":
+    case "one_time":
+    case "every_n_days":
+    case "yearly":
+      return schedule;
+  }
+}
+
+/** Equal settings, weekdays, month days and dates compared regardless of order. */
+export function sameSettings(a: GoalSettings, b: GoalSettings): boolean {
+  return sameJson({ ...a, schedule: canonicalSchedule(a.schedule) }, { ...b, schedule: canonicalSchedule(b.schedule) });
+}
+
 /** The most versions a document keeps; the oldest folds into the next. */
 export const MAX_VERSIONS = 100;
 
 /**
  * goal_version_add: a detail edit saved as a version from `today`. Unchanged settings add
- * nothing; a second edit on the same day replaces today's version, and editing back to the
+ * nothing (weekdays, month days and dates compare as sets); a second edit on the same day replaces today's version, and editing back to the
  * previous settings removes it; a 101st version folds the oldest into the next.
  */
 export function addVersion(versions: readonly Version[], settings: GoalSettings, today: string): Version[] {
   const next = versions.map((version) => ({ ...version }));
   const last = next.at(-1);
   if (last === undefined) return [{ from: today, ...settings }];
-  if (sameJson(settingsOf(last), settings)) return next;
+  if (sameSettings(settingsOf(last), settings)) return next;
   if (day(last.from) >= day(today)) {
     next[next.length - 1] = { from: last.from, ...settings };
     const previous = next.at(-2);
-    if (previous !== undefined && sameJson(settingsOf(previous), settings)) next.pop();
+    if (previous !== undefined && sameSettings(settingsOf(previous), settings)) next.pop();
   } else {
     next.push({ from: today, ...settings });
   }

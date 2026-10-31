@@ -3,6 +3,7 @@
 // day is an effective practice day (`YYYY-MM-DD`, src/shared/practice).
 export { attributeCounts, type AttributedGoal } from "./counts";
 export { makeUpDays, type DayStatus, type MakeUpDay } from "./dayStatus";
+export { goalDocumentProblems } from "./documentValidity";
 export { goalIsDue } from "./due";
 export { canExcuse, EXCUSED_PER_MONTH, type ExcuseAnswer, type ExcuseRefusal } from "./excused";
 export { mergeGoalOrder } from "./order";
@@ -27,4 +28,4 @@ export {
 export { goalCompletion, todayRing, type TodayRing } from "./today";
 export type * from "./types";
 export { documentErrors, goalErrors, sessionId, type GoalError } from "./validity";
-export { addVersion, isTimeline, MAX_VERSIONS, versionOnDay } from "./versions";
+export { addVersion, isTimeline, MAX_VERSIONS, sameSettings, versionOnDay } from "./versions";
