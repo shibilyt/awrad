@@ -52,12 +52,11 @@ struct GoalModelFixtureTests {
     }
 
     @Test(arguments: try GoalModelFixtures.goalStreak())
-    func goalStreak(_ fixture: FixtureCase<GoalOnDay, StreakExpect>) throws {
+    func goalStreak(_ fixture: FixtureCase<TimelineOnDay, StreakExpect>) {
         let given = fixture.given
-        let weekStart = try #require(given.weekStart, "\(fixture.id): week_start")
-        let current = given.goal.currentStreak(
-            on: given.date, counts: given.counts, weekStart: weekStart, hijriCorrections: given.hijriCorrections)
-        #expect(StreakExpect(current: current) == fixture.expect, "\(fixture.id): \(fixture.summary)")
+        let streak = given.timeline.streak(
+            on: given.date, counts: given.counts, weekStart: given.weekStart, hijriCorrections: given.hijriCorrections)
+        #expect(StreakExpect(streak) == fixture.expect, "\(fixture.id): \(fixture.summary)")
     }
 
     @Test(arguments: try GoalModelFixtures.goalValidity())

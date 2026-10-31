@@ -6,16 +6,22 @@ import Testing
 struct SwiftDataGoalRepositoryTests {
     @Test func addedGoalsAreStored() async throws {
         let repository = SwiftDataGoalRepository(modelContainer: try AwradStore.inMemory())
-        let goal = try Goal(
-            id: .random(),
-            dhikrCatalogKey: "isthighfar",
+        let start = try #require(CalendarDay("2026-10-17"))
+        let settings = try GoalSettings(
             schedule: .everyDay,
-            activePeriod: ActivePeriod(start: try #require(CalendarDay("2026-10-17"))),
+            activePeriod: ActivePeriod(start: start),
             countPolicy: CountPolicy(target: 70, streakThreshold: .target),
             requirement: .perDueDate
         )
+        let document = GoalDocument(
+            dhikrID: try #require(AwradID("3285e014-551b-46a4-aedc-8b6664b59bc7")),
+            dhikrSnapshot: DhikrSnapshot(title: LanguageTexts(en: "Isthighfar"), arabic: "أَسْتَغْفِرُ ٱللَّٰهَ", kind: .dhikr),
+            name: nil,
+            counts: .shared,
+            timeline: try GoalTimeline(createdOn: start, versions: [GoalVersion(from: start, settings: settings)])
+        )
 
-        try await repository.add(goal)
+        try await repository.add(document, id: .random())
 
         #expect(try await repository.count() == 1)
     }

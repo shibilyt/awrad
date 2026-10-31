@@ -48,7 +48,8 @@ public struct CalendarDay: Hashable, Sendable, Strideable, CustomStringConvertib
     }
 
     public var weekday: Weekday {
-        Weekday(gregorianNumber: Gregorian.calendar.component(.weekday, from: utcMidnight))
+        // 1970-01-01 was a Thursday (Gregorian weekday 5, where 1 is Sunday).
+        Weekday(gregorianNumber: ((ordinal + 4) % 7 + 7) % 7 + 1)
     }
 
     public var firstDayOfMonth: CalendarDay {
@@ -56,21 +57,31 @@ public struct CalendarDay: Hashable, Sendable, Strideable, CustomStringConvertib
     }
 
     public var lastDayOfMonth: CalendarDay {
-        let length = Gregorian.calendar.range(of: .day, in: .month, for: utcMidnight)?.count ?? day
-        return adding(days: length - day)
+        adding(days: Self.daysInMonth(year: year, month: month) - day)
     }
 
+    /// Plain ordinal arithmetic: the goal rules walk many days, and Foundation's calendar is slow.
     public func adding(days: Int) -> CalendarDay {
         guard days != 0 else { return self }
-        guard let date = Gregorian.calendar.date(byAdding: .day, value: days, to: utcMidnight) else {
-            preconditionFailure("Gregorian day arithmetic overflowed: \(self) + \(days)")
-        }
-        return CalendarDay(utcMidnight: date)
+        return CalendarDay(ordinal: ordinal + days)
     }
 
     /// Whole days from `self` to `other` (negative when `other` is earlier).
     public func distance(to other: CalendarDay) -> Int {
-        Gregorian.calendar.dateComponents([.day], from: utcMidnight, to: other.utcMidnight).day ?? 0
+        other.ordinal - ordinal
+    }
+
+    /// The number of days in a Gregorian month.
+    static func daysInMonth(year: Int, month: Int) -> Int {
+        switch month {
+        case 2:
+            let isLeap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+            return isLeap ? 29 : 28
+        case 4, 6, 9, 11:
+            return 30
+        default:
+            return 31
+        }
     }
 
     public func advanced(by days: Int) -> CalendarDay {

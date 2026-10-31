@@ -53,7 +53,7 @@ extension Goal {
     ) -> RequirementStanding {
         let ledger = CountLedger(counts)
         guard activePeriod.contains(day) else {
-            let empty = progress(in: day...day, through: day, ledger: CountLedger([]), threshold: targetThreshold)
+            let empty = progress(in: day...day, through: day, ledger: CountLedger([]))
             return RequirementStanding(empty, window: day...day, status: .notDue)
         }
         let window: ClosedRange<CalendarDay>
@@ -71,15 +71,9 @@ extension Goal {
             due = whole != nil && !dueDays(in: clipped, hijriCorrections: hijriCorrections).isEmpty
             window = due ? clipped : day...day
         }
-        let measured = progress(in: window, through: day, ledger: ledger, threshold: targetThreshold)
+        let measured = progress(in: window, through: day, ledger: ledger)
         let status: RequirementStanding.Status = due ? (measured.isMet ? .met : .notMet) : .notDue
         return RequirementStanding(measured, window: window, status: status)
-    }
-
-    /// Whether `window` (a whole period, clipped) meets the period total, counting up to `through`.
-    /// Shared with the period streak.
-    func meetsPeriodTotal(in window: ClosedRange<CalendarDay>, through: CalendarDay, ledger: CountLedger) -> Bool {
-        progress(in: window, through: through, ledger: ledger, threshold: targetThreshold).isMet
     }
 }
 

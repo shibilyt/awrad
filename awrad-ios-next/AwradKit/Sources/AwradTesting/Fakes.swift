@@ -18,11 +18,11 @@ public actor FakeOnboardingStatusStore: OnboardingStatusStore {
 }
 
 public actor FakeGoalRepository: GoalRepository {
-    public private(set) var goals: [Goal] = []
+    public private(set) var goals: [(id: AwradID, document: GoalDocument)] = []
 
     public init() {}
 
-    public func add(_ goal: Goal) { goals.append(goal) }
+    public func add(_ document: GoalDocument, id: AwradID) { goals.append((id, document)) }
     public func count() -> Int { goals.count }
 }
 
