@@ -78,6 +78,7 @@ class FixtureCoverageTest {
             setOf(
                 "tag_name_normalization", // personal.TagNameNormalizationFixtureTest
                 "custom_dhikr_validity", // personal.CustomDhikrValidityFixtureTest
+                "goal_document_validity", // sync.GoalDocumentValidityFixtureTest
                 "outbox_enqueue", // sync.OutboxEnqueueFixtureTest
                 "apply_changes", // sync.ApplyChangesFixtureTest
                 "profile_switch", // sync.ProfileSwitchFixtureTest

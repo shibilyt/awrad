@@ -78,6 +78,9 @@ public enum class RejectionCode(public val wire: String) {
     /** A goal put would take the account past 300 goals that haven't ended, or 2,000 in all (slice 4). */
     GOAL_LIMIT_REACHED("goal_limit_reached"),
 
+    /** A goal put changed a stored goal's `dhikr_id` or `counts`, which never change (slice 4). */
+    GOAL_FIELD_IMMUTABLE("goal_field_immutable"),
+
     /**
      * Not a rejection: the notice when a goal edit lost to another device's, so the phone took the server's goal and
      * offers to do it again (decision 44).
@@ -114,6 +117,9 @@ public enum class FieldErrorCode(public val wire: String) {
 
     /** A value is out of order with another, such as a Qur'an reference whose `ayah_end` is below `ayah_start`. */
     RANGE("range"),
+
+    /** A goal's `dhikr_id` or `counts` differs from the stored goal's (`goal_field_immutable`). */
+    IMMUTABLE("immutable"),
     ;
 
     public companion object {
