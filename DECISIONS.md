@@ -935,6 +935,66 @@ The frozen apps keep an account practice policy (day reset, method, madhab) behi
 
 ADR-2026-09-09 "Separate account practice policy from device context" and ADR-2026-09-09 "Merge local and remote practice settings at account binding", for the rebuild. They stay accepted for the frozen apps. The account/device split they made is kept; their API, device-context upload and binding rules are replaced.
 
+## ADR-2026-10-31: Counts belong to the dhikr; goals choose shared or dedicated
+
+Status: Accepted
+
+### Context
+
+The frozen apps store counts per goal (goal, slot, date), so two goals for the same dhikr never share a count: saying Istighfar 100 times fills one goal and not the other, and a lifetime total needs a goal of its own. Their sync sends per-bucket increment, decrement and reset commands to a server ledger. Slice 4 (`docs/slices/04-goals.md`, decisions 1, 2, 5, 37 and 44 in `docs/slices/04-goals-decisions.md`) lets one count fill several goals, keeps history when goals end or their dhikr is deleted, and judges each past day by the settings it had. Counting is built in slice 5, but every platform reads goals from these counts in slice 4, so the shape is fixed now.
+
+### Decision
+
+- **A count belongs to the dhikr and the practice day,** not to a goal. Each profile keeps an append-only **count log** of entries `{id, dhikr_id, practice_day, session_id, goal_id, amount, counted_at}`:
+  - `id` is a UUIDv7;
+  - `amount` is never 0, and undo and adjustments are negative entries;
+  - reset cancels only the entries the device has seen.
+
+  Entries are never edited, so counts from several devices merge and never conflict. The log syncs in slice 5, to an append-only server table.
+- **Each goal is shared or dedicated,** chosen at creation and never changed:
+  - a shared goal is filled by every count of its dhikr without a `goal_id`, wherever it was made;
+  - a dedicated goal only by entries carrying its own `goal_id`, which fill no other goal.
+
+  Creating a goal asks only when another goal already uses the dhikr, with shared preselected.
+- **Sessions match across goals by kind.** A session's ID is derived from its kind (`after_fajr`, `at_0630`, `between_2100_2330`), so a shared count made in one goal's session fills the same session of another goal on that dhikr.
+- **A goal is one versioned document** in the change queue (`goal`, a UUIDv7). It holds:
+  - its dhikr and a snapshot of the dhikr's label;
+  - a name and its counts choice;
+  - up to 100 **dated versions** of its settings;
+  - pauses, excused days, and how it ended.
+
+  Rules judge each day by the version in force that day. Changing the dhikr, schedule type or requirement type ends the goal and starts a new one.
+- **Deleting a custom dhikr ends its goals**, and never deletes them or their counts:
+  - the server ends every goal of it that hasn't ended, at the delete's revision (`ended.reason: dhikr_deleted`), and lists them in the receipt's `cascaded`;
+  - a goal later put naming that deleted dhikr is stored ended.
+- **Goal edits from two devices: the first to reach the server wins** (the existing version check). The other device takes the server's goal and offers a one-tap retry, instead of Keep mine / Use theirs. The user's order of goals is one `goal_order` entity per account, which phones merge without asking.
+- **Bounds:**
+  - 300 goals that haven't ended and 2,000 in all per account (`goal_limit_reached`);
+  - goals not ended are never refused.
+
+  Apps don't limit goals; they show a gentle note past about 7 daily goals.
+
+### Consequences
+
+- Lifetime totals per dhikr come from the log, and shared goals agree with each other without copying counts.
+- Deleting a goal deletes its dedicated counts only; shared counts stay with the dhikr.
+- Every rule reads per-goal counts through one attribution step (`count_attribution.json`). Each platform implements it and runs its fixture.
+- The frozen per-goal progress model and progress-sync v1 aren't carried into the rebuild. The frozen apps keep theirs.
+- Session IDs are no longer free-form: a goal can't have two sessions of the same kind.
+- A goal the server ends itself gets the server's UTC date, which can be a day off the user's practice day.
+- Server, Android, iOS and web each implement the rules and run the fixtures in slice 4a. Slice 4b syncs goals, and slice 5 syncs the log.
+
+### Evidence
+
+- `docs/slices/04-goals.md`, `docs/slices/04-goals-decisions.md`
+- `contracts/goal-model/v1/` (README, `goal-model.schema.json` `goal_document`, `count_log_entry`; fixtures `count_attribution`, `goal_version_on_day`, `goal_version_add`, `goal_validity`)
+- `contracts/sync/v1/` (README, `sync.schema.json`, `sync_receipts` and `apply_changes` cases)
+- `contracts/tools/goal-rules.mjs`, `check-goal-model.mjs`, `check-sync-contract.mjs`
+
+### Supersedes
+
+None. It extends ADR-2026-10-28 (the change queue) with the `goal` and `goal_order` entities and a second cascade, and replaces, for the rebuild, the per-goal progress buckets of ADR-2026-07-13 "UUIDv4 progress identity and native model parity" and the count ledger of ADR-2026-07-16. Those stay accepted for the frozen apps.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

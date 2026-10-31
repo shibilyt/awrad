@@ -1,6 +1,6 @@
 # Slice 4: Goals
 
-Status: Agreed 2026-10-31 (scope and questions 1–15, all as recommended); 4a in progress
+Status: Agreed 2026-10-31 (scope and questions 1–15, all as recommended); 4a in progress (steps 3 and 4 done)
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 4
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 Decisions: [`04-goals-decisions.md`](04-goals-decisions.md) (45 decisions, 2026-10-30 and 2026-10-31). Prototype: branch `prototype/goals`, `prototypes/goals/`.
@@ -119,54 +119,80 @@ Android and iOS are almost identical (iOS mirrors Android), and the rows note wh
 
 ## Domain and fixtures (step 3, slice 4a)
 
+Done 2026-10-31. The rules, conventions and every judgment call the decisions left open are in [`contracts/goal-model/v1/README.md`](../../contracts/goal-model/v1/README.md) (section "Judgment calls", for review).
+
 **New and changed terms in `CONTEXT.md`:**
-- shared and dedicated counts;
-- dated version;
 - dhikr snapshot;
-- make-up window and make-up fill;
+- shared and dedicated counts, and the count log;
+- dated version;
 - excused day;
-- consistency and the consistency tag;
+- sessions (kinds);
+- ended and completed goals;
 - streak unit;
+- make-up (window and fill);
+- consistency and the consistency tag;
 - daily pace;
-- Tracking (section);
-- ended and completed goals.
+- My Goals sections (Tracking);
+- goal order;
+- conflicts on goals.
 
-**Goal model changes (`goal-model/v1`):**
-- **Sessions** gain a `kind`: `anytime`, `after_prayer {prayer}`, `at_time {time}`, `between {from, to}`.
-- **The streak threshold** gains a number: `{"amount": N}` alongside `any_count | minimum | target | maximum`, for total goals and trackers (29, 36). A tracker may now have a streak amount, which today's validity rule refuses.
+**Goal model changes (`goal-model/v1`, edited in place):**
+- **Sessions** gain a `kind`: `anytime`, `before_prayer {prayer}`, `after_prayer {prayer}`, `at_time {time}`, `between {from, to}`. Their ID is derived from the kind (`after_fajr`), so shared counts match sessions across goals.
+- **The streak threshold** gains `{"amount": N}` (29, 36) and `daily_pace` (a total with an end, 28–29). A tracker may now have a streak amount.
 - **Make-up:** `{window: off | next_day | within_3_days, fill: streak | target}` (18, 31). Only valid for daily (`per_due_date`) goals.
-- **Excused days:** a list of dates.
+- **Excused days:** a list of dates on every goal.
+- **The goal document** (`$defs/goal_document`): `dhikr_id`, `dhikr_snapshot`, `name`, `counts`, `created_on`, `versions` (1–100), `paused`, `excused`, `ended`. Its rule-facing part is `$defs/goal_timeline`, and `$defs/goal` stays what a rule evaluates on one day.
 - **Rules evaluate a goal on a day by the version in force that day.**
+- **Every "day" is the practice day** (question 12). A total goal with no rhythm uses `every_day` (question 8).
+- **Presets** gain Ramadan's first and middle ten (`goal-presets/v1`). White Days and the sacred months were already there (question 10).
 
-**New fixture files** (`awrad-fixture/1`, one rule each):
+**Fixture files** (`awrad-fixture/1`, one rule each):
 
-| File | Rule |
-|---|---|
-| `goal_version_on_day.json` | Which version applies on a date; structural fields can't change between versions |
-| `count_attribution.json` | Count-log entries plus goals (shared or dedicated, sessions) → each goal's counts per day and session |
-| `make_up.json` | Counts past a day's target fill missed days inside the window, up to the fill amount, oldest first; the result per day: met, made up, missed |
-| `excused_days.json` | Excusing is allowed on missed due days only, at most 2 per goal per calendar month; an excused day is skipped like a pause; in "N days a period" goals it lowers that period's number |
-| `goal_streak.json` (extended) | Units (days, weekdays, weeks, months, occasions), make-up and excused days, `{"amount": N}` thresholds |
-| `consistency.json` | Met due days out of the last 30 (or periods out of the last 12) → the tag `devoted` (≥ 90%), `steady` (≥ 80%) or none; no tag before 7 due days; 🔥 shows again from a 3-day streak |
-| `daily_pace.json` | Remaining amount ÷ remaining due days, for total goals with an end date; recalculated per day |
-| `today_ring.json` | What a list ring fills toward today, per requirement (target, pace share, streak amount, period progress, none for trackers without an amount) |
-| `goal_list_placement.json` | Today, Upcoming (with when), Tracking, Paused or History, per goal and date |
-| `goal_validity.json` (extended) | Sessions XOR minimum/cap, an end date XOR a number of days, make-up only on daily goals, versions' structural fields equal |
+| File | Rule | Cases |
+|---|---|---|
+| `goal_version_on_day.json` | Which version applies on a date, and the `goal` it resolves into (an ended goal's end caps it) | 12 |
+| `goal_version_add.json` | A detail edit adds a version from today; same-day edits replace it; the 100-version fold | 8 |
+| `count_attribution.json` | Count-log entries plus goals (shared or dedicated, sessions) → each goal's counts per day and session | 9 |
+| `make_up.json` | Counts past a later day's needs fill missed days inside the window, oldest first; each due day's status: met, minimum only, made up, missed, in progress | 22 |
+| `excused_days.json` | Whether a day can be excused or un-excused, with the reason | 29 |
+| `goal_streak.json` (extended) | Units (days, one weekday, weeks, months, occasions), make-up, excused days, amount and pace thresholds, versions, ended goals | 56 |
+| `consistency.json` | Kept due days out of the last 30 (or periods out of the last 12) → `devoted`, `steady` or none; no tag before 7 due days (4 periods); whether the row shows 🔥, the tag or nothing | 18 |
+| `daily_pace.json` | What's left ÷ due days left, rounded up, for total goals with an end; recalculated per day | 17 |
+| `today_ring.json` | What a list ring fills toward today, per requirement | 20 |
+| `goal_list_placement.json` | Today, Upcoming (with when), Tracking, Paused or History, and the order in each | 19 |
+| `goal_order_merge.json` | Merging a conflicting `goal_order` without asking | 8 |
+| `goal_validity.json` (extended) | Sessions XOR minimum/cap, session IDs and windows, an end date XOR a number of days, make-up only on daily goals, pace only on totals with an end; for documents, versions in order and structural fields equal | 43 |
+| `goal_is_due.json`, `days_per_period.json` (extended) | Excused days aren't due, and lower an "N days a period" number | 63, 18 |
 
-**Count log entry** (shape fixed now, synced in 5): `{id, dhikr_id, practice_day, session_id, goal_id, amount, counted_at}`. `goal_id` is set only for dedicated goals, `amount` may be negative (adjust, undo), and `id` is a UUIDv7.
+`npm test` runs every goal-model case through `contracts/tools/goal-rules.mjs`, a reference reading of the README (`tools/check-goal-model.mjs`).
+
+**Count log entry** (shape fixed now, synced in 5): `$defs/count_log_entry`, `{id, dhikr_id, practice_day, session_id, goal_id, amount, counted_at}`. `goal_id` is set only for dedicated goals, `amount` is never 0 and may be negative (adjust, undo), and `id` is a UUIDv7.
+
+**Slice 1 cases whose meaning changed** (the platform runners from slice 1 fail on them until step 5):
+- every goal gains `excused` and `make_up`, and sessions gain `kind` and derived IDs (`fajr` became `after_fajr`), in every goal-model file;
+- `goal_streak` expects `{current, unit, weekday}`, and accepts a `goal_timeline`;
+- `goal_streak` `ramadan_streak_spans_years` (32 → 1) and `ramadan_streak_broken_last_year` (3 → 0) now count Ramadans;
+- `goal_is_due` `end_date_earlier_than_duration` and `duration_earlier_than_end_date` were removed: a goal with both an end date and a number of days is now invalid;
+- `goal_validity` accepts `{document}` as well as `{goal}`, with new error codes.
 
 ## Contract (step 4)
 
+Done 2026-10-31: [`contracts/sync/v1/README.md`](../../contracts/sync/v1/README.md), `sync.schema.json`, `contracts/api/paths/sync.yaml` (bundled).
+
 - **Sync entities** (`sync/v1`):
-  - `goal`: the goal document above, with a UUIDv7 ID;
-  - `goal_order`: `{goal_ids}`, one per account, merged by the phone rather than conflicted, like `practice_policy`.
+  - `goal`: the goal document, with a UUIDv7 ID;
+  - `goal_order`: `{goal_ids}`, one per account (ID = the account's), merged by the phone rather than conflicted, like `practice_policy`. It can't be deleted.
 - **Server rules:**
-  - a goal names a built-in dhikr or an active custom dhikr (`dhikr_not_found`);
-  - the limits from question 6 (`goal_limit_reached`);
-  - deleting a custom dhikr ends its active goals as a cascade.
-- **Conflicts:** goals use the existing conflict receipt. Phones show decision 44's notice instead of 3b's Keep mine / Use theirs.
-- **No new HTTP operations:** everything goes through `/api/v1/sync/commands` and `/api/v1/sync/changes`.
-- **ADR:** counts belong to the dhikr, and goals choose shared or dedicated (root `DECISIONS.md`, because it binds every platform and slice 5).
+  - a goal names a built-in dhikr or a custom dhikr of the account (`dhikr_not_found`). One naming a deleted custom dhikr is applied and stored ended (`dhikr_deleted`);
+  - the goal rules are `document_invalid`, with a field error per rule;
+  - the limits from question 6 (`goal_limit_reached`): 300 goals that haven't ended and 2,000 in all;
+  - a `goal_order` keeps only the account's non-deleted goals; repeats are invalid;
+  - deleting a custom dhikr ends its active and paused goals at the same revision, listed in `cascaded`, on the server's UTC date.
+- **Conflicts:** goals use the existing conflict receipt. Phones take the server's goal and show decision 44's notice (`goal_edit_not_applied`) with a retry, instead of 3b's Keep mine / Use theirs.
+- **Phones:** a goal references its custom dhikr, and a goal order its goals, for outbox ordering. Deleting a custom dhikr ends its goals locally without queuing them. Goals count as profile data at the first sign-in.
+- **Fixtures:** cases added to `sync_receipts` (17), `apply_changes` (11), `outbox_enqueue` (5) and `profile_switch` (1). `tools/check-sync-contract.mjs` checks the goal rules, the cascade, the goal order rewrite and goal conflicts.
+- **No new HTTP operations:** everything goes through `/api/v1/sync/commands` and `/api/v1/sync/changes`, whose schemas and examples now include both entities.
+- **ADR:** root `DECISIONS.md` ADR-2026-10-31, "Counts belong to the dhikr; goals choose shared or dedicated".
 
 ## Platform work (step 5)
 

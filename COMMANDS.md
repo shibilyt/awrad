@@ -23,6 +23,8 @@ npm test                     # bundle fresh, spec lint clean, every rule fires, 
 npm run lint:api             # just the Spectral lint
 npm run check:fixtures       # just the awrad-fixture/1 files
 npm run check:practice-settings   # slice 3d rules, Maghrib from adhan, the city list and its search
+npm run check:goal-model     # every goal-model case against the reference rules in tools/goal-rules.mjs (slice 4a)
+npm run check:sync           # the change-queue contract: examples, receipts, cascades, goals
 npm run build:cities -- <dir>     # rebuild places/v1/cities.json from a GeoNames dump (cities15000.txt, admin1CodesASCII.txt)
 ```
 
