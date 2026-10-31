@@ -30,6 +30,18 @@ struct SyncFixtureTests {
         }
     }
 
+    @Test(arguments: try SyncFixtures.goalDocumentValidity())
+    func goalDocumentValidity(_ fixture: FixtureCase<CustomDhikrValidityGiven, ValidityShape>) {
+        let errors = GoalDocumentValidation.errors(in: fixture.given.document)
+        let result = ValidityShape(
+            valid: errors.isEmpty, errors: errors.map { FieldErrorShape(field: $0.field, code: $0.code) })
+        #expect(result == fixture.expect, "\(fixture.id): \(fixture.summary)")
+        // A valid document builds the typed document, which writes the same JSON back.
+        if errors.isEmpty {
+            #expect((try? GoalDocument(json: fixture.given.document))?.json == fixture.given.document)
+        }
+    }
+
     @Test(arguments: try SyncFixtures.outboxEnqueue())
     func outboxEnqueue(_ fixture: FixtureCase<OutboxEnqueueGiven, OutboxShape>) throws {
         var state = try fixture.given.state()

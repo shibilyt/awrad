@@ -9,6 +9,7 @@ import Foundation
 public enum SyncRule: String, CaseIterable, Sendable {
     case tagNameNormalization = "tag_name_normalization"
     case customDhikrValidity = "custom_dhikr_validity"
+    case goalDocumentValidity = "goal_document_validity"
     case outboxEnqueue = "outbox_enqueue"
     case applyChanges = "apply_changes"
     case profileSwitch = "profile_switch"
@@ -35,6 +36,10 @@ public enum SyncFixtures {
 
     public static func customDhikrValidity() throws -> [FixtureCase<CustomDhikrValidityGiven, ValidityShape>] {
         try SyncRule.customDhikrValidity.cases((CustomDhikrValidityGiven.self, ValidityShape.self))
+    }
+
+    public static func goalDocumentValidity() throws -> [FixtureCase<CustomDhikrValidityGiven, ValidityShape>] {
+        try SyncRule.goalDocumentValidity.cases((CustomDhikrValidityGiven.self, ValidityShape.self))
     }
 
     public static func outboxEnqueue() throws -> [FixtureCase<OutboxEnqueueGiven, OutboxShape>] {

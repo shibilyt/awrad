@@ -50,7 +50,7 @@ extension Strings {
             )
         // Practice-policy and goal codes never reach the Library: their screens show their own.
         case .deleteNotAllowed, .commandIDReused, .entityIDInvalid, .hijriCorrectionsReplaced, .goalLimitReached,
-            .goalEditNotApplied, .other:
+            .goalFieldImmutable, .goalEditNotApplied, .other:
             text("library.notice.reason.other", "It couldn't be saved.")
         }
     }

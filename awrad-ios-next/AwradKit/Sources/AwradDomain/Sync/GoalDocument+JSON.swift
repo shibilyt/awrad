@@ -8,10 +8,11 @@ import Foundation
 // same, and is equal as a value.
 
 extension GoalDocument {
-    /// The document from its wire JSON, if it has the schema's shape and follows the goal rules.
-    /// Errors name the first member that's wrong (`invalid`), or the version whose settings break a
-    /// goal rule; the server reports goal rules in full (sync/v1 README, "Goal rules as field errors").
+    /// The document from its wire JSON, if it has the schema's shape and follows the goal rules;
+    /// otherwise every problem `GoalDocumentValidation` finds.
     public init(json: AwradJSON) throws(SyncDocumentError) {
+        let errors = GoalDocumentValidation.errors(in: json)
+        guard errors.isEmpty else { throw SyncDocumentError(type: .goal, errors: errors) }
         do {
             self = try Self.read(JSONReader(json, path: ""))
         } catch let error as JSONReader.Failure {
@@ -98,7 +99,7 @@ extension GoalVersion {
         return .object(members)
     }
 
-    fileprivate static func read(_ json: JSONReader) throws -> GoalVersion {
+    static func read(_ json: JSONReader) throws -> GoalVersion {
         GoalVersion(from: try json["from"].day(), settings: try GoalSettings.read(json))
     }
 }
@@ -120,7 +121,7 @@ extension GoalSettings {
         ])
     }
 
-    fileprivate static func read(_ json: JSONReader) throws -> GoalSettings {
+    static func read(_ json: JSONReader) throws -> GoalSettings {
         let period = try json["active_period"]
         let makeUp = try json["make_up"]
         let completion = try json["completion"].string()
@@ -184,7 +185,7 @@ extension Schedule {
         }
     }
 
-    fileprivate static func read(_ json: JSONReader) throws -> Schedule {
+    static func read(_ json: JSONReader) throws -> Schedule {
         switch try json["kind"].string() {
         case "every_day": return .everyDay
         case "one_time": return .oneTime
@@ -207,7 +208,7 @@ extension Schedule {
 extension MonthDay {
     var json: AwradJSON { .object(["month": .int(month), "day": .int(day)]) }
 
-    fileprivate static func read(_ json: JSONReader) throws -> MonthDay {
+    static func read(_ json: JSONReader) throws -> MonthDay {
         MonthDay(month: try json["month"].int(), day: try json["day"].int())
     }
 }
@@ -220,7 +221,7 @@ extension CountPolicy {
         ])
     }
 
-    fileprivate static func read(_ json: JSONReader) throws -> CountPolicy {
+    static func read(_ json: JSONReader) throws -> CountPolicy {
         CountPolicy(
             minimum: try json["minimum"].optionalCount(), target: try json["target"].optionalCount(),
             maximum: try json["maximum"].optionalCount(),
@@ -238,7 +239,7 @@ extension StreakThreshold {
         return .string(Self.names.first { $0.value == self }?.key ?? "")
     }
 
-    fileprivate static func read(_ json: JSONReader) throws -> StreakThreshold {
+    static func read(_ json: JSONReader) throws -> StreakThreshold {
         if json.json.objectValue != nil { return .amount(Int64(try json["amount"].int())) }
         guard let threshold = names[try json.string()] else { throw JSONReader.Failure(field: json.path) }
         return threshold
@@ -265,7 +266,7 @@ extension GoalSession {
         return .object(members)
     }
 
-    fileprivate static func read(_ json: JSONReader) throws -> GoalSession {
+    static func read(_ json: JSONReader) throws -> GoalSession {
         let kind: SessionKind
         switch try json["kind"].string() {
         case "anytime": kind = .anytime
@@ -291,7 +292,7 @@ extension Requirement {
         }
     }
 
-    fileprivate static func read(_ json: JSONReader) throws -> Requirement {
+    static func read(_ json: JSONReader) throws -> Requirement {
         switch try json["type"].string() {
         case "per_due_date": return .perDueDate
         case "cumulative_total": return .cumulativeTotal
@@ -306,7 +307,7 @@ extension Requirement {
 extension Period {
     var wireName: String { self == .hijriMonth ? "hijri_month" : rawValue }
 
-    fileprivate static func read(_ json: JSONReader) throws -> Period {
+    static func read(_ json: JSONReader) throws -> Period {
         let name = try json.string()
         guard let period = allCases.first(where: { $0.wireName == name }) else {
             throw JSONReader.Failure(field: json.path)
@@ -323,7 +324,7 @@ extension AwradJSON {
 }
 
 /// Reads a JSON value, naming the member that's missing or of the wrong type.
-private struct JSONReader {
+struct JSONReader {
     struct Failure: Error {
         let field: String
     }
