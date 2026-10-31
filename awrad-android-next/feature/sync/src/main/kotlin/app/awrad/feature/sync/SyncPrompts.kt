@@ -245,6 +245,7 @@ internal fun refusedReason(code: RejectionCode): Int = when (code) {
     RejectionCode.AUDIO_MISMATCH -> R.string.sync_reason_audio_mismatch
     RejectionCode.ENTITY_ID_INVALID -> R.string.sync_reason_entity_id_invalid
     RejectionCode.GOAL_LIMIT_REACHED -> R.string.sync_reason_goal_limit
+    RejectionCode.GOAL_FIELD_IMMUTABLE -> R.string.sync_reason_goal_field_immutable
     RejectionCode.GOAL_EDIT_NOT_APPLIED -> R.string.sync_reason_goal_edit_not_applied
     RejectionCode.HIJRI_CORRECTIONS_REPLACED -> R.string.sync_reason_hijri_corrections_replaced
 }

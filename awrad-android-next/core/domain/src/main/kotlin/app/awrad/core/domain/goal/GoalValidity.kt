@@ -1,5 +1,7 @@
 package app.awrad.core.domain.goal
 
+import app.awrad.core.domain.sync.FieldError
+import app.awrad.core.domain.sync.FieldErrorCode
 import java.time.LocalDate
 
 /** Why a goal or goal document can't be built: `contracts/goal-model/v1/fixtures/goal_validity.json`'s codes. */
@@ -107,6 +109,58 @@ internal fun timelineErrors(createdOn: LocalDate, versions: List<GoalVersion>): 
     if (versions.first().from != createdOn) add(GoalDefinitionError.FIRST_VERSION_NOT_CREATED_ON)
     val structure = versions.first().settings.structure
     if (versions.any { it.settings.structure != structure }) add(GoalDefinitionError.STRUCTURAL_CHANGE)
+}
+
+/**
+ * [timelineErrors] as `{field, code}` errors at the version (`N`) and session (`M`) they're in (contracts/sync/v1
+ * README.md, "Goal documents"), unsorted.
+ */
+internal fun timelineFieldErrors(createdOn: LocalDate, versions: List<GoalVersion>): List<FieldError> = buildList {
+    versions.forEachIndexed { n, version -> addAll(version.settings.fieldErrors("/versions/$n")) }
+    versions.zipWithNext().forEachIndexed { index, (earlier, later) ->
+        if (!later.from.isAfter(earlier.from)) add(FieldError("/versions/${index + 1}/from", FieldErrorCode.RANGE))
+    }
+    if (versions.first().from != createdOn) add(FieldError("/versions/0/from", FieldErrorCode.MISMATCH))
+    val structure = versions.first().settings.structure
+    versions.forEachIndexed { n, version ->
+        if (version.settings.structure != structure) add(FieldError("/versions/$n", FieldErrorCode.MISMATCH))
+    }
+}
+
+private fun GoalSettings.fieldErrors(path: String): List<FieldError> {
+    val codes = validityErrors()
+    fun at(member: String, code: FieldErrorCode) = FieldError("$path/$member", code)
+    return buildList {
+        if (GoalDefinitionError.TARGET_REQUIRED in codes) add(at("count_policy/target", FieldErrorCode.REQUIRED))
+        val thresholdCodes = setOf(
+            GoalDefinitionError.STREAK_THRESHOLD_VALUE_REQUIRED,
+            GoalDefinitionError.STREAK_PACE_NOT_ALLOWED,
+        )
+        if (codes.any { it in thresholdCodes }) add(at("count_policy/streak_threshold", FieldErrorCode.INVALID))
+        if (GoalDefinitionError.END_DATE_AND_DURATION in codes) {
+            add(at("active_period/duration_days", FieldErrorCode.NOT_ALLOWED))
+        }
+        if (GoalDefinitionError.MAKE_UP_NOT_ALLOWED in codes) add(at("make_up/window", FieldErrorCode.NOT_ALLOWED))
+        if (GoalDefinitionError.SESSIONS_WITH_MINIMUM_OR_CAP in codes) {
+            if (countPolicy.minimum != null) add(at("count_policy/minimum", FieldErrorCode.NOT_ALLOWED))
+            if (countPolicy.maximum != null) add(at("count_policy/maximum", FieldErrorCode.NOT_ALLOWED))
+        }
+        addAll(sessionFieldErrors(path))
+    }
+}
+
+private fun GoalSettings.sessionFieldErrors(path: String): List<FieldError> = buildList {
+    val seen = mutableSetOf<String>()
+    sessions.forEachIndexed { m, session ->
+        val at = "$path/sessions/$m"
+        if (requirement != Requirement.Tracker && session.target == null) {
+            add(FieldError("$at/target", FieldErrorCode.REQUIRED))
+        }
+        if (session.id != session.kind.derivedId) add(FieldError("$at/id", FieldErrorCode.MISMATCH))
+        if (!seen.add(session.id)) add(FieldError("$at/id", FieldErrorCode.DUPLICATE))
+        val kind = session.kind
+        if (kind is SessionKind.Between && kind.from == kind.to) add(FieldError("$at/to", FieldErrorCode.RANGE))
+    }
 }
 
 /** What can't change between versions (decision 23): changing it ends the goal and starts a new one. */

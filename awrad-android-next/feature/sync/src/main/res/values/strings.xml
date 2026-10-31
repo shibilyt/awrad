@@ -86,6 +86,7 @@
     <string name="sync_reason_hijri_corrections_replaced">Another device changed your Hijri corrections at the same time, and the two couldn’t be combined. Its corrections were kept; your other practice settings were saved.</string>
     <string name="sync_conflict_goals">Your goals were changed on another device after you changed them here.</string>
     <string name="sync_reason_goal_limit">Your account already has 300 goals in progress, or 2,000 in all.</string>
+    <string name="sync_reason_goal_field_immutable">A goal’s dhikr and whether its counts are shared can’t change. The goal was restored; start a new goal instead.</string>
     <string name="sync_goal_edit_not_applied_title">Goal changed on another device</string>
     <string name="sync_reason_goal_edit_not_applied">This goal was changed on another device first, so your change wasn’t applied. It now shows the other device’s version.</string>
 </resources>
