@@ -54,11 +54,30 @@ defmodule Awrad.Goals.Timeline do
   """
   @spec new(Goal.attrs()) :: {:ok, t()} | {:error, [error(), ...]}
   def new(attrs) do
+    case validate(attrs) do
+      {:ok, timeline} ->
+        {:ok, timeline}
+
+      {:error, problems} ->
+        {:error, problems |> Enum.map(&elem(&1, 0)) |> Enum.uniq() |> Enum.sort()}
+    end
+  end
+
+  @typedoc "Where a problem is: a path into the goal document, in its member names and indexes."
+  @type path :: [String.t() | non_neg_integer()]
+
+  @doc """
+  Like `new/1`, but an invalid timeline's errors say where each problem is
+  (`{:session_id_mismatch, ["versions", 0, "sessions", 1, "id"]}`), for the
+  change queue's field errors. In the order found, one per place.
+  """
+  @spec validate(Goal.attrs()) :: {:ok, t()} | {:error, [{error(), path()}, ...]}
+  def validate(attrs) do
     case struct!(__MODULE__, attrs) do
       %__MODULE__{versions: [_ | _]} = timeline ->
-        case Validity.timeline_errors(timeline) do
+        case Validity.timeline_problems(timeline) do
           [] -> {:ok, timeline}
-          errors -> {:error, errors}
+          problems -> {:error, problems}
         end
 
       %__MODULE__{} ->

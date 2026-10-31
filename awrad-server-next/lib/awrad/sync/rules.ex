@@ -21,27 +21,38 @@ defmodule Awrad.Sync.Rules do
       `tag_not_found`.
     * `practice_policy`: nothing more; its ID and document were checked
       before (`Awrad.Sync.Commands`).
+    * `goal` and `goal_order`: `Awrad.Sync.GoalRules` (slice 4).
 
-  `write/4` applies the command at its revision: the entity's version goes up
+  `write/5` applies the command at its revision: the entity's version goes up
   by one, and the cascades share the revision (a deleted tag leaves every
-  `dhikr_personal`; a deleted custom dhikr deletes its `dhikr_personal`) and
-  are returned for the receipt's `cascaded`.
+  `dhikr_personal`; a deleted custom dhikr deletes its `dhikr_personal` and
+  ends its goals that haven't ended) and are returned for the receipt's
+  `cascaded`.
   """
 
   import Ecto.Query
 
   alias Awrad.Dhikrs.Catalog
   alias Awrad.Repo
-  alias Awrad.Sync.{AudioReferences, Entity, Receipt, TagAlias}
+  alias Awrad.Sync.{AudioReferences, Entity, GoalRules, Receipt, TagAlias}
 
   @max_tags 100
   @max_custom_dhikrs 1_000
 
   @doc "`{:ok, document_to_store}` (`nil` for a delete), or `{:stop, receipt}`."
-  @spec check(Ecto.UUID.t(), map(), Entity.t() | nil) :: {:ok, map() | nil} | {:stop, map()}
-  def check(_user_id, %{"op" => "delete"}, _entity), do: {:ok, nil}
+  @spec check(Ecto.UUID.t(), map(), Entity.t() | nil, Date.t()) ::
+          {:ok, map() | nil} | {:stop, map()}
+  def check(_user_id, %{"op" => "delete"}, _entity, _today), do: {:ok, nil}
 
-  def check(user_id, %{"entity_type" => "user_tag"} = command, entity) do
+  def check(user_id, %{"entity_type" => "goal"} = command, entity, today),
+    do: GoalRules.check_goal(user_id, command, entity, today)
+
+  def check(user_id, %{"entity_type" => "goal_order"} = command, _entity, _today),
+    do: GoalRules.check_goal_order(user_id, command)
+
+  def check(user_id, command, entity, _today), do: check_entity(user_id, command, entity)
+
+  defp check_entity(user_id, %{"entity_type" => "user_tag"} = command, entity) do
     %{"entity_id" => id, "document" => document} = command
     taken = active_tag_named(user_id, document["normalized_name"], id)
 
@@ -61,7 +72,7 @@ defmodule Awrad.Sync.Rules do
     end
   end
 
-  def check(user_id, %{"entity_type" => "custom_dhikr"} = command, entity) do
+  defp check_entity(user_id, %{"entity_type" => "custom_dhikr"} = command, entity) do
     if is_nil(entity) and count_active(user_id, "custom_dhikr") >= @max_custom_dhikrs do
       {:stop, Receipt.rejected(command, "custom_dhikr_limit_reached", [], nil)}
     else
@@ -69,7 +80,7 @@ defmodule Awrad.Sync.Rules do
     end
   end
 
-  def check(user_id, %{"entity_type" => "dhikr_personal"} = command, entity) do
+  defp check_entity(user_id, %{"entity_type" => "dhikr_personal"} = command, entity) do
     if dhikr?(user_id, command["entity_id"]) do
       tag_ids(user_id, command, entity)
     else
@@ -79,8 +90,12 @@ defmodule Awrad.Sync.Rules do
   end
 
   # Its ID (the account's) and document are already checked.
-  def check(_user_id, %{"entity_type" => "practice_policy", "document" => document}, _entity),
-    do: {:ok, document}
+  defp check_entity(
+         _user_id,
+         %{"entity_type" => "practice_policy", "document" => document},
+         _entity
+       ),
+       do: {:ok, document}
 
   defp merge(user_id, command, %Entity{} = tag) do
     Repo.insert!(%TagAlias{
@@ -152,11 +167,17 @@ defmodule Awrad.Sync.Rules do
   new version and the receipt's `cascaded`: for a `user_tag` or
   `custom_dhikr` delete, every other entity changed at `revision`
   (`$defs/cascaded_change`), ordered by entity type, then ID, and `[]` when
-  nothing cascaded; `nil` for every other command.
+  nothing cascaded; `nil` for every other command. `today` is the UTC date
+  goals a custom dhikr delete ends get (`Awrad.Sync.GoalRules.ended/2`).
   """
-  @spec write(Ecto.UUID.t(), map(), Entity.t() | nil, {map() | nil, pos_integer()}) ::
-          {integer(), [map()] | nil}
-  def write(user_id, command, nil, {document, revision}) do
+  @spec write(
+          Ecto.UUID.t(),
+          map(),
+          Entity.t() | nil,
+          {map() | nil, pos_integer()},
+          Date.t()
+        ) :: {integer(), [map()] | nil}
+  def write(user_id, command, nil, {document, revision}, _today) do
     Repo.insert!(%Entity{
       user_id: user_id,
       entity_type: command["entity_type"],
@@ -170,20 +191,18 @@ defmodule Awrad.Sync.Rules do
     {1, nil}
   end
 
-  def write(_user_id, %{"op" => "put"}, %Entity{version: version} = entity, {document, revision})
-      when is_integer(version) do
+  def write(_user_id, %{"op" => "put"}, %Entity{} = entity, {document, revision}, _today) do
     change(entity, "active", document, revision)
-    {version + 1, nil}
+    {entity.version + 1, nil}
   end
 
-  def write(user_id, %{"op" => "delete"}, %Entity{version: version} = entity, {nil, revision})
-      when is_integer(version) do
+  def write(user_id, %{"op" => "delete"}, %Entity{} = entity, {nil, revision}, today) do
     change(entity, "deleted", nil, revision)
-    {version + 1, cascade(user_id, entity, revision)}
+    {entity.version + 1, cascade(user_id, entity, {revision, today})}
   end
 
   # A deleted tag leaves every active dhikr_personal that names it.
-  defp cascade(user_id, %Entity{entity_type: "user_tag", entity_id: tag_id}, revision) do
+  defp cascade(user_id, %Entity{entity_type: "user_tag", entity_id: tag_id}, {revision, _today}) do
     from(e in active(user_id, "dhikr_personal"),
       where: fragment("? @> ?", e.document, type(^%{"tag_ids" => [tag_id]}, :map))
     )
@@ -195,15 +214,22 @@ defmodule Awrad.Sync.Rules do
     |> cascaded()
   end
 
-  # A deleted custom dhikr deletes its dhikr_personal.
-  defp cascade(user_id, %Entity{entity_type: "custom_dhikr", entity_id: id}, revision) do
-    from(e in active(user_id, "dhikr_personal"), where: e.entity_id == ^id)
-    |> Repo.all()
-    |> Enum.map(&change(&1, "deleted", nil, revision))
-    |> cascaded()
+  # A deleted custom dhikr deletes its dhikr_personal, and ends its goals that
+  # haven't ended (active and paused ones; decision 37).
+  defp cascade(user_id, %Entity{entity_type: "custom_dhikr", entity_id: id}, {revision, today}) do
+    personal =
+      from(e in active(user_id, "dhikr_personal"), where: e.entity_id == ^id)
+      |> Repo.all()
+      |> Enum.map(&change(&1, "deleted", nil, revision))
+
+    goals =
+      for goal <- GoalRules.running_goals_of(user_id, id),
+          do: change(goal, "active", GoalRules.ended(goal.document, today), revision)
+
+    cascaded(personal ++ goals)
   end
 
-  defp cascade(_user_id, _entity, _revision), do: nil
+  defp cascade(_user_id, _entity, _context), do: nil
 
   defp cascaded(entities) do
     entities

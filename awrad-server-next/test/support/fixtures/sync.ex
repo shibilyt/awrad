@@ -15,16 +15,10 @@ defmodule Awrad.Fixtures.Sync do
   alias Awrad.Repo
   alias Awrad.Sync.{Entity, Head, Receipt, TagAlias}
 
-  @doc """
-  Whether a case's `given` names a `goal` or `goal_order` entity anywhere (in
-  its state or its batch). The server builds those entities in slice 4b
-  (`docs/slices/04-goals.md`); until then the runners skip these cases.
-  """
-  @spec goal_entities?(term()) :: boolean()
-  def goal_entities?(%{"entity_type" => type}) when type in ["goal", "goal_order"], do: true
-  def goal_entities?(%{} = map), do: map |> Map.values() |> Enum.any?(&goal_entities?/1)
-  def goal_entities?(list) when is_list(list), do: Enum.any?(list, &goal_entities?/1)
-  def goal_entities?(_other), do: false
+  @doc "A `sync_receipts` state's `utc_date`, the date the server ends goals on (`nil` if absent)."
+  @spec utc_date(map()) :: Date.t() | nil
+  def utc_date(%{"utc_date" => date}), do: Date.from_iso8601!(date)
+  def utc_date(%{}), do: nil
 
   @doc "Inserts a `sync_receipts` given `state` (or a feed's entities and head) for `user_id`."
   @spec put_state!(Ecto.UUID.t(), map()) :: :ok
