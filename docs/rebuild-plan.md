@@ -134,12 +134,13 @@ Each slice goes contract → server → Android → iOS → web and is done only
 | 3b | Custom dhikrs, tags and the change queue: create, edit, delete offline on phones and online on the web; sync when signed in ([brief](slices/03b-custom-dhikrs-sync.md)) | [x] 2026-10-28 |
 | 3c | Private audio upload for custom dhikrs (R2 bucket `awrad-private-dhikr`, signed in): 10 MB per file, 500 MB per account, MP3 and M4A/AAC ([brief](slices/03c-audio-upload.md)) | [x] 2026-10-29 |
 | 3d | Practice settings: day reset, method and madhab, week start, Hijri corrections in the change queue; location on the device only, with a bundled city list ([brief](slices/03d-practice-settings.md)) | [x] 2026-10-30 |
-| 4 | Goals: create, edit, evaluate; offline-first on mobile; synced through the change queue from 3b | [ ] |
-| 5 | Counting and progress sync | [ ] |
+| 4a | Goal rules: the goal document with dated versions and a dhikr snapshot, shared or dedicated counts, streaks in the goal's rhythm, consistency, make-up, excused days, pace, list placement; fixtures and runners on Android, iOS, server and web ([brief](slices/04-goals.md), [decisions](slices/04-goals-decisions.md)) | [ ] |
+| 4b | Goals: create with the sentence, My Goals, History, editing, ending and deleting, stats sheet, empty state, reordering; goals synced through the change queue ([brief](slices/04-goals.md)) | [ ] |
+| 5 | Counting: the counter (decisions 14–16, 34–36, 38–39, 45), the count log and its sync, adjust, undo and reset, late counting and make-up filling, sound and vibration settings | [ ] |
 | 6 | Onboarding: the full first-run flow (intro, language, and the steps that set up practice settings, reminders and a first goal), built after 3d and 4 (decided 2026-10-29). Optional sign-in only, never a gate (ADR-2026-10-28) | [ ] |
 | 7+ | Wird, reminders, Home screen (Hijri date, today's goals, next prayer), prayer times, history and stats, community / collective counters: to be split into slices | [ ] |
 | later | Sequenced dhikr in one goal (e.g. Tasbih Fatimah 33/33/34): its own brief; relates to "Practice plan" | [ ] |
-| later | Carry-over / make-up rule: a missed amount moves to the next due day | [ ] |
+| later | Volume buttons as counters (up adds 1, down undoes within the session, off by default) and a dark "pocket mode"; check iOS feasibility first (goals decision 45, 2026-10-31) | [ ] |
 
 **Decided 2026-10-27:** dhikrs first (3a, 3b), then goals built together with sync (option B: the change queue and goal sync in one slice). Sync moved to 3b on 2026-10-28 (custom dhikrs and tags are its first users); practice settings (3d) is next (2026-10-29), then goals (4), then onboarding (6).
 
