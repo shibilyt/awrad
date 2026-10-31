@@ -126,7 +126,8 @@ public enum GoalDocumentValidation {
             let ranges: Rule = { json, path in
                 guard let calendar else { return [] }
                 let errors = list(max: .max, item: yearlyRange(calendar))(json, path)
-                return errors.isEmpty && json.arrayValue?.isEmpty == true ? [invalid(path)] : errors
+                return errors.isEmpty && json.arrayValue?.isEmpty == true
+                    ? [SyncFieldError(field: path, code: "required")] : errors
             }
             return object(
                 json, path,
@@ -271,10 +272,11 @@ extension GoalDocumentValidation {
     }
 
     /// A list of at least `min` items without repeats, each checked; a short or repeating list is
-    /// `invalid`.
+    /// `invalid`, except an empty list, which is `required`.
     static func set(min: Int, item: @escaping Rule) -> Rule {
         { json, path in
             guard let items = json.arrayValue else { return [invalid(path)] }
+            if items.isEmpty, min > 0 { return [SyncFieldError(field: path, code: "required")] }
             let errors = items.enumerated().flatMap { item($1, "\(path)/\($0)") }
             guard errors.isEmpty else { return errors }
             return items.count >= min && Set(items).count == items.count ? [] : [invalid(path)]
