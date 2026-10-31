@@ -3,12 +3,14 @@
 // effective practice day, the bundled city list, and this browser's own location.
 export { loadCities, searchCities, searchKey, type City, type CityList } from "./cities";
 export { clock } from "./clock";
-export { addDays, asUtcInstant, localDate } from "./dates";
+export { addDays, asUtcInstant, dayNumber, fromDayNumber, localDate } from "./dates";
 export {
   allowedOffsets,
   areValidCorrections,
   hijriCorrectionErrors,
   hijriDate,
+  hijriMonthOn,
+  hijriTableEnd,
   monthStart,
   nextMonth,
   offsetFor,
@@ -18,6 +20,7 @@ export {
   type HijriCorrection,
   type HijriCorrectionError,
   type HijriDate,
+  type HijriMonth,
 } from "./hijri";
 export { readBrowserLocation, storedLocation, storeLocation, useDeviceLocation, type DeviceLocation } from "./location";
 export { maghribOn } from "./maghrib";
