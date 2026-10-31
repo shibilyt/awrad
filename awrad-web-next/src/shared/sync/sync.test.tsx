@@ -85,6 +85,8 @@ const STATE: SyncState = {
     [TAHLEEL]: { id: TAHLEEL, version: 1, document: { tag_ids: ["0192f0a0-0000-7000-8000-000000000001"] } },
   },
   practice_policy: {},
+  goal: {},
+  goal_order: {},
   headRevision: 10,
 };
 
@@ -114,7 +116,10 @@ describe("reading the changes feed", () => {
     expect(state.dhikr_personal[TAHLEEL]?.document.tag_ids).toHaveLength(2);
     // The deleted tag on the second page isn't kept.
     expect(state.user_tag).toEqual({});
-    expect(state.headRevision).toBe(14);
+    // Slice 4's entities are kept too: a goal, and the account's goal order under its ID.
+    expect(Object.keys(state.goal)).toEqual(["0192f300-0000-7000-8000-000000000002"]);
+    expect(Object.keys(state.goal_order)).toEqual([ACCOUNT]);
+    expect(state.headRevision).toBe(16);
   });
 
   test("the page queries carry after and limit", async () => {
